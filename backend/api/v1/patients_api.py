@@ -5,23 +5,26 @@ import logging
 from flask_restx import Resource, Namespace, fields
 
 from backend.api.v1.shared_models import failed_response
+from backend.common.db.model.enums import Sex, DrugType
 
 logger = logging.getLogger(__name__)
 
 namespace = Namespace('patients')
 
 target_aptt = namespace.model('TargetAptt', {
-    'from': fields.Float(requred=True),
-    'to': fields.Float(requred=True),
+    'low': fields.Float(requred=True),
+    'high': fields.Float(requred=True),
 })
 
 patient = namespace.model('Patient', {
     'id': fields.Integer(required=True),
     'first_name': fields.String(required=True),
+    'last_name': fields.String(required=True),
     'date_of_birth': fields.Date(required=True),
     'height': fields.Integer(required=True, description='In CM'),
     'weight': fields.Float(required=True, description='In KG'),
-    'sex': fields.String(required=True),
+    'sex': fields.String(required=True, enum=[sex.value for sex in Sex]),
+    'drug_type': fields.String(required=True, enum=[drug.value for drug in DrugType]),
     'target_aptt': fields.Nested(target_aptt),
     'actual_aptt': fields.Float(required=True),
     'actual_aptt_updated_on': fields.DateTime(required=True),
