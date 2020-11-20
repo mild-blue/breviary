@@ -133,7 +133,9 @@ def _get_next_remainder(current_aptt: float, heparin_continuous_dosage: float) -
 
 def _get_doctor_warning(current_aptt: float, previous_aptt: float, heparin_continuous_dosage: float,
                         weight: float) -> Optional[str]:
-    if current_aptt < LOWEST_APTT and previous_aptt < LOWEST_APTT:
+    if current_aptt is None or previous_aptt is None or heparin_continuous_dosage is None:
+        return None
+    elif current_aptt < LOWEST_APTT and previous_aptt < LOWEST_APTT:
         return f"aPTT below {LOWEST_APTT} for 2 consecutive measurements."
     elif current_aptt > HIGHEST_APTT and previous_aptt > HIGHEST_APTT:
         return f"aPTT above {HIGHEST_APTT} for 2 consecutive measurements."
@@ -146,7 +148,7 @@ def _get_doctor_warning(current_aptt: float, previous_aptt: float, heparin_conti
 
 def recommended_heparin(weight: float, target_aptt_low: float, target_aptt_high: float, current_aptt: Optional[float],
                         previous_aptt: Optional[float], solution_heparin_units: float,
-                        solution_ml: float, current_continuous_dosage: float,
+                        solution_ml: float, current_continuous_dosage: Optional[float],
                         previous_continuous_dosage: Optional[float]) -> HeparinRecommendation:
     heparin_continuous_dosage, heparin_bolus_dosage = _calculate_recommended_dosage(weight, target_aptt_low,
                                                                                     target_aptt_high,
@@ -160,5 +162,5 @@ def recommended_heparin(weight: float, target_aptt_low: float, target_aptt_high:
 
 
 if __name__ == '__main__':
-    reco = recommended_heparin(83, 1.5, 2, 1.8, None, 25000, 500, 20, None)
+    reco = recommended_heparin(83, 1.5, 2, 1.1, 1.15, 25000, 500, 25, 26)
     print(reco.heparin_continuous_dosage, reco.heparin_bolus_dosage, reco.next_remainder, reco.doctor_warning)
