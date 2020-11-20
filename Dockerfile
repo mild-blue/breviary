@@ -24,5 +24,4 @@ RUN echo $release_version > $RELEASE_FILE_PATH
 # Start the app - one must initialize shell beforehand
 CMD . ~/.bashrc && \
     conda activate breviary && \
-    cd backend && \
     gunicorn --bind 0.0.0.0:8080 backend.app:app --preload
