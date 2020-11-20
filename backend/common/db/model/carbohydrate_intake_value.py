@@ -7,11 +7,11 @@ from backend.common.db.model.patient import Patient
 from backend.common.db.model_utils import get_primary_key_name, get_foreign_key_name
 
 
-class GlycemiaValue(Base):
+class CarbohydrateIntakeValue(Base):
     """
-    GlycemiaValue class
+    CarbohydrateIntakeValue class
     """
-    __tablename__ = "glycemia_value"
+    __tablename__ = "carbohydrate_intake_values"
 
     id = Column(Integer, primary_key=True, autoincrement=True, nullable=False)
     patient_id = Column(
@@ -20,7 +20,7 @@ class GlycemiaValue(Base):
         nullable=False
     )
     patient: RelationshipProperty = relationship(Patient)
-    glycemia_value = Column(Integer, unique=False, nullable=False)
+    carbohydrate_intake_value = Column(Integer, unique=False, nullable=False)
     created_at = Column(DateTime(timezone=True), unique=False, nullable=False, server_default=func.now())
     updated_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now())
     deleted_at = Column(DateTime(timezone=True), nullable=True)
@@ -29,7 +29,8 @@ class GlycemiaValue(Base):
     def __init__(
             self,
             patient: Patient,
-            glycemia_value: int
+            carbohydrate_intake_value: int,
+            dosage_heparin_bolus: int
     ) -> None:
         self.patient = patient
-        self.glycemia_value = glycemia_value
+        self.carbohydrate_intake_value = carbohydrate_intake_value
