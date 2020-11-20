@@ -1,4 +1,4 @@
-from typing import List, Optional, cast
+from typing import List, Optional
 
 from sqlalchemy.orm import Session  # pylint: disable=import-error
 
@@ -18,15 +18,15 @@ class PatientRepository(BaseRepository):
         return sup.base_get_all(Patient)  # type: ignore
 
     @staticmethod
-    def create(app_user: Patient, commit: bool = True) -> Patient:
+    def create(patient: Patient, commit: bool = True) -> Patient:
         sup = super(PatientRepository, PatientRepository)
-        return sup.base_create(app_user, commit)  # type: ignore
+        return sup.base_create(patient, commit)  # type: ignore
 
     @staticmethod
-    def create_many(app_users: List[Patient], commit: bool = True) -> List[Patient]:
+    def create_many(patients: List[Patient], commit: bool = True) -> List[Patient]:
         sup = super(PatientRepository, PatientRepository)
-        sup.base_create_many(app_users, commit)  # type: ignore
-        return app_users
+        sup.base_create_many(patients, commit)  # type: ignore
+        return patients
 
     @staticmethod
     def count(session: Optional[Session] = None) -> int:

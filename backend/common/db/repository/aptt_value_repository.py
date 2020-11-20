@@ -18,15 +18,15 @@ class ApttValueRepository(BaseRepository):
         return sup.base_get_all(ApttValue)  # type: ignore
 
     @staticmethod
-    def create(app_user: ApttValue, commit: bool = True) -> ApttValue:
+    def create(aptt_value: ApttValue, commit: bool = True) -> ApttValue:
         sup = super(ApttValueRepository, ApttValueRepository)
-        return sup.base_create(app_user, commit)  # type: ignore
+        return sup.base_create(aptt_value, commit)  # type: ignore
 
     @staticmethod
-    def create_many(app_users: List[ApttValue], commit: bool = True) -> List[ApttValue]:
+    def create_many(aptt_values: List[ApttValue], commit: bool = True) -> List[ApttValue]:
         sup = super(ApttValueRepository, ApttValueRepository)
-        sup.base_create_many(app_users, commit)  # type: ignore
-        return app_users
+        sup.base_create_many(aptt_values, commit)  # type: ignore
+        return aptt_values
 
     @staticmethod
     def count(session: Optional[Session] = None) -> int:
