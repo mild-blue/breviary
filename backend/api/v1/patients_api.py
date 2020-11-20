@@ -3,6 +3,7 @@
 import datetime
 import logging
 
+from flask import request
 from flask_restx import Resource, Namespace, fields
 
 from backend.api.v1.heparin_recommendation_dto_out import heparin_recommendation_out, heparin_recommendation_to_out
@@ -24,7 +25,7 @@ target_aptt = namespace.model('TargetAptt', {
     '': fields.Float(requred=True),
 })
 
-patient = namespace.model('Patient', {
+patient_out = namespace.model('PatientOut', {
     'id': fields.Integer(required=True),
     'first_name': fields.String(required=True),
     'last_name': fields.String(required=True),
@@ -39,11 +40,23 @@ patient = namespace.model('Patient', {
     'actual_dosage': fields.Float(required=True),
 })
 
+patient_in = namespace.model('PatientIn', {
+    'id': fields.String(required=True)
+})
+
+patient_in_update = namespace.model('PatientInUpdate', {
+    'drug_type': fields.String(required=True, enum=[drug.value for drug in DrugType]),
+    'target_aptt_low': fields.Float(required=False),  # HEPARIN
+    'target_aptt_high': fields.Float(required=False),  # HEPARIN
+    'tddi': fields.Float(required=False),  # INSULIN
+    'target_glycemia': fields.Float(required=False)  # INSULIN
+})
+
 
 @namespace.route('/')
 class PatientsLists(Resource):
     model = namespace.model('PatientsData', {
-        'patients': fields.List(required=True, cls_or_instance=fields.Nested(patient)),
+        'patients': fields.List(required=True, cls_or_instance=fields.Nested(patient_out)),
     })
 
     @namespace.response(code=200,
@@ -60,10 +73,27 @@ class PatientsLists(Resource):
 
         return result
 
+    @namespace.doc(body=patient_in)
+    @namespace.response(code=200, model=patient_out, description='')
+    @namespace.response(code=400, model=failed_response, description='')
+    @namespace.response(code=401, model=failed_response, description='')
+    @namespace.response(code=500, model=failed_response, description='')
+    def post(self):
+        post_data = request.get_json()
+        dummy_patient_id = post_data['id']
+        pa = PatientRepository.get_first_inactive_patient()
+
+        if pa is None:
+            return None
+
+        pa.active = True
+        pa = PatientRepository.base_update(pa)
+        return _patient_model_to_dto(pa)
+
 
 @namespace.route('/<patient_id>')
 class Patient(Resource):
-    model = patient
+    model = patient_out
 
     @namespace.response(code=200,
                         model=model,
@@ -74,6 +104,32 @@ class Patient(Resource):
     def get(self, patient_id: str):
         patient_id = int(patient_id)
         pa = PatientRepository.get_by_id(patient_id)
+        return _patient_model_to_dto(pa)
+
+    @namespace.doc(body=patient_in_update)
+    @namespace.response(code=200, model=patient_out, description='')
+    @namespace.response(code=400, model=failed_response, description='')
+    @namespace.response(code=401, model=failed_response, description='')
+    @namespace.response(code=500, model=failed_response, description='')
+    def put(self, patient_id: str):
+        patient_id = int(patient_id)
+        pa = PatientRepository.get_by_id(patient_id)
+        if pa is None:
+            return None
+
+        put_data = request.get_json()
+        if put_data['drug_type'] == DrugType.HEPARIN:
+            pa.heparin = True
+            pa.insulin = False
+            pa.target_aptt_low = float(put_data['target_aptt_low'])
+            pa.target_aptt_high = float(put_data['target_aptt_high'])
+        else:
+            pa.heparin = False
+            pa.insulin = True
+            pa.tddi = float(put_data['tddi'])
+            pa.target_glycemia = float(put_data['target_glycemia'])
+
+        pa = PatientRepository.base_update(pa)
         return _patient_model_to_dto(pa)
 
 

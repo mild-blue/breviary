@@ -1,5 +1,6 @@
-from typing import List, Optional
+from typing import List, Optional, cast
 
+from sqlalchemy import desc
 from sqlalchemy.orm import Session  # pylint: disable=import-error
 
 from backend.common.db.database import get_db_session
@@ -38,3 +39,11 @@ class PatientRepository(BaseRepository):
     def get_by_id(idd: int) -> Optional[Patient]:
         sup = super(PatientRepository, PatientRepository)
         return sup.base_get_by_id(Patient, idd)  # type: ignore
+
+    @staticmethod
+    def get_first_inactive_patient() -> Optional[Patient]:
+        session = BaseRepository.get_session()
+        # pylint: disable=E1101,C0301
+        item = session.query(Patient).filter(Patient.active == False) \
+            .order_by(desc(Patient.id)).first()  # type: ignore  # noqa: E501
+        return cast(Patient, item)
