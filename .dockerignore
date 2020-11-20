@@ -1,0 +1,9 @@
+Dockerfile
+README.md
+.gitignore
+.env.*
+.env
+.mypy_cache/
+.idea/
+.github/
+docker-compose.yml

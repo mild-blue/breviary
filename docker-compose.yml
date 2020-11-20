@@ -1,0 +1,33 @@
+version: '3.8'
+services:
+  db:
+    container_name: breviary-db
+    image: postgres:13.0
+    env_file:
+      - .env
+    ports:
+      - 5432:5432
+    volumes:
+      - breviary-db:/var/lib/postgresql/data/
+    networks:
+      - breviary-network
+
+  backend:
+    container_name: breviary-backend
+    image: mildblue/breviary
+    env_file:
+      - .env
+    ports:
+      - 8090:8080
+    restart: always
+    depends_on:
+      - db
+    networks:
+      - breviary-network
+
+volumes:
+  breviary-db:
+
+networks:
+  breviary-network:
+    driver: bridge
