@@ -52,6 +52,6 @@ class HeparinDosageRepository(BaseRepository):
     def get_by_patient_id(patient_id: int) -> List[HeparinDosage]:
         session = BaseRepository.get_session()
         # pylint: disable=E1101,C0301
-        item = session.query(HeparinDosage) \
+        item = session.query(HeparinDosage).filter(HeparinDosage.patient_id == patient_id) \
             .order_by(desc(HeparinDosage.id)).all()  # type: ignore  # noqa: E501
         return cast(List[HeparinDosage], item)

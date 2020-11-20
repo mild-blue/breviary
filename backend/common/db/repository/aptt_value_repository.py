@@ -63,6 +63,6 @@ class ApttValueRepository(BaseRepository):
     def get_by_patient_id(patient_id: int) -> List[ApttValue]:
         session = BaseRepository.get_session()
         # pylint: disable=E1101,C0301
-        item = session.query(ApttValue) \
+        item = session.query(ApttValue).filter(ApttValue.patient_id == patient_id) \
             .order_by(desc(ApttValue.id)).all()  # type: ignore  # noqa: E501
         return cast(List[ApttValue], item)
