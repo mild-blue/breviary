@@ -5,7 +5,7 @@ import logging
 
 from flask_restx import Resource, Namespace, fields
 
-from backend.api.v1.heparin_recommendation_dto_out import heparin_recommendation_out
+from backend.api.v1.heparin_recommendation_dto_out import heparin_recommendation_out, heparin_recommendation_to_out
 from backend.api.v1.shared_models import failed_response
 from backend.common.db.model.enums import Sex, DrugType
 from backend.common.db.repository.aptt_value_repository import ApttValueRepository
@@ -94,15 +94,22 @@ class Recommendation(Resource):
         current_aptt = ApttValueRepository.get_newest_by_patient_id(pa.id)
         previous_appt = ApttValueRepository.get_second_newest_by_patient_id(pa.id)
 
-        return recommended_heparin(
+        current_dosage = HeparinDosageRepository.get_newest_by_patient_id(pa.id)
+        previous_dosage = HeparinDosageRepository.get_second_newest_by_patient_id(pa.id)
+
+        return heparin_recommendation_to_out(recommended_heparin(
             weight=float(pa.weight),
             target_aptt_low=float(pa.target_aptt_low),
             target_aptt_high=float(pa.target_aptt_high),
-            current_aptt=-1 if current_aptt is None else float(current_aptt.aptt_value),
-            previous_aptt=-1 if previous_appt is None else float(previous_appt.aptt_value),
+            current_aptt=None if current_aptt is None else float(current_aptt.aptt_value),
+            previous_aptt=None if previous_appt is None else float(previous_appt.aptt_value),
             solution_heparin_units=float(pa.solution_heparin_iu),
-            solution_ml=float(pa.solution_ml)
-        )
+            solution_ml=float(pa.solution_ml),
+            current_continuous_dosage=None if current_dosage is None else float(
+                current_dosage.dosage_heparin_continuous),
+            previous_continuous_dosage=None if previous_dosage is None else float(
+                previous_dosage.dosage_heparin_continuous)
+        ))
 
 
 dosage = namespace.model('DosageEntry', {
@@ -130,7 +137,8 @@ class Recommendation(Resource):
         aptts = ApttValueRepository.get_by_patient_id(patient_id)
 
         return {
-            'dosage_entries': [{'date': dosage.created_at.isoformat(), 'value': float(dosage.dosage_heparin_continuous)} for dosage in
+            'dosage_entries': [{'date': dosage.created_at.isoformat(), 'value': float(dosage.dosage_heparin_continuous)}
+                               for dosage in
                                dosages],
             'aptt_entries': [{'date': aptt.created_at.isoformat(), 'value': float(aptt.aptt_value)} for aptt in aptts]
         }
@@ -139,8 +147,10 @@ class Recommendation(Resource):
 def _patient_model_to_dto(pa: Patient) -> dict:
     if pa is None:
         return None
+
     actual_appt = ApttValueRepository.get_newest_by_patient_id(pa.id)
     heparin_dosage = HeparinDosageRepository.get_newest_by_patient_id(pa.id)
+
     return {
         'id': pa.id,
         'first_name': pa.first_name,
@@ -155,6 +165,7 @@ def _patient_model_to_dto(pa: Patient) -> dict:
             'high': float(pa.target_aptt_high)
         },
         'actual_aptt': -1 if actual_appt is None else float(actual_appt.aptt_value),
-        'actual_aptt_updated_on': datetime.date(1970, 1, 1).isoformat() if actual_appt is None else actual_appt.created_at.isoformat(),
+        'actual_aptt_updated_on': datetime.date(1970, 1,
+                                                1).isoformat() if actual_appt is None else actual_appt.created_at.isoformat(),
         'actual_dosage': -1 if heparin_dosage is None else float(heparin_dosage.dosage_heparin_continuous)
     }
