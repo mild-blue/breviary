@@ -10,24 +10,26 @@ CREATE TYPE SEX AS ENUM (
 
 CREATE TABLE patients
 (
-    id               BIGSERIAL   NOT NULL,
-    first_name       TEXT,
-    last_name        TEXT,
-    date_of_birth    date,
-    height           NUMERIC,
-    weight           NUMERIC,              --NOT NULL if heparin=TRUE
-    sex              SEX,
-    active           BOOLEAN     NOT NULL, -- default false, false means the patient is in IKEM DB but not in app DB
-    heparin          BOOLEAN     NOT NULL, -- true if patient in heparin part of app
-    insulin          BOOLEAN     NOT NULL, -- true if patient in insulin part of app
-    target_aptt_low  NUMERIC,              --NOT NULL if heparin=TRUE
-    target_aptt_high NUMERIC,              --NOT NULL if heparin=TRUE
-    tddi             NUMERIC,              -- NOT NULL if insulin=TRUE
-    target_glycemia  NUMERIC,              -- NOT NULL if insulin=TRUE
-    other_params     jsonb,
-    created_at       TIMESTAMPTZ NOT NULL,
-    updated_at       TIMESTAMPTZ NOT NULL,
-    deleted_at       TIMESTAMPTZ,
+    id                  BIGSERIAL   NOT NULL,
+    first_name          TEXT,
+    last_name           TEXT,
+    date_of_birth       date,
+    height              NUMERIC,
+    weight              NUMERIC,              --NOT NULL if heparin=TRUE
+    sex                 SEX,
+    active              BOOLEAN     NOT NULL, -- default false, false means the patient is in IKEM DB but not in app DB
+    heparin             BOOLEAN     NOT NULL, -- true if patient in heparin part of app
+    insulin             BOOLEAN     NOT NULL, -- true if patient in insulin part of app
+    target_aptt_low     NUMERIC,              --NOT NULL if heparin=TRUE
+    target_aptt_high    NUMERIC,              --NOT NULL if heparin=TRUE
+    solution_heparin_iu NUMERIC,              --NOT NULL if heparin=TRUE
+    solution_ml         NUMERIC,              --NOT NULL if heparin=TRUE
+    tddi                NUMERIC,              -- NOT NULL if insulin=TRUE
+    target_glycemia     NUMERIC,              -- NOT NULL if insulin=TRUE
+    other_params        jsonb,
+    created_at          TIMESTAMPTZ NOT NULL,
+    updated_at          TIMESTAMPTZ NOT NULL,
+    deleted_at          TIMESTAMPTZ,
     CONSTRAINT pk_patients__id PRIMARY KEY (id)
 );
 
