@@ -5,6 +5,7 @@ import logging
 from flask import request
 from flask_restx import Resource, fields, Namespace
 
+from backend.api.v1.heparin_recommendation_dto_out import heparin_recommendation_out
 from backend.api.v1.shared_models import failed_response
 from backend.heparin.heparin_dosage import recommended_heparin
 
@@ -14,12 +15,7 @@ logger = logging.getLogger(__name__)
 namespace = Namespace('heparin-recommendation')
 
 # shared models
-heparin_recommendation_out_model = namespace.model('HeparinRecommendationOut', {
-    'heparin_continuous_dosage': fields.Float(required=True, description='Heparin countinuous dosage.'),
-    'heparin_bolus_dosage': fields.Float(required=True, description='Heparin bolus dosage.'),
-    'next_remainder': fields.DateTime(required=True, description='Next reminder.'),
-    'doctor_warning': fields.String(required=False, description='Doctor warning.'),
-})
+heparin_recommendation_out_model = namespace.model('HeparinRecommendationOut', heparin_recommendation_out)
 
 
 @namespace.route('/heparin-recommendation')

@@ -1,5 +1,6 @@
-from typing import List, Optional
+from typing import List, Optional, cast
 
+from sqlalchemy import desc
 from sqlalchemy.orm import Session  # pylint: disable=import-error
 
 from backend.common.db.database import get_db_session
@@ -38,3 +39,30 @@ class ApttValueRepository(BaseRepository):
     def get_by_id(idd: int) -> Optional[ApttValue]:
         sup = super(ApttValueRepository, ApttValueRepository)
         return sup.base_get_by_id(ApttValue, idd)  # type: ignore
+
+    @staticmethod
+    def get_newest_by_patient_id(patient_id: int) -> Optional[ApttValue]:
+        session = BaseRepository.get_session()
+        # pylint: disable=E1101,C0301
+        item = session.query(ApttValue).filter(ApttValue.patient_id == patient_id) \
+            .order_by(desc(ApttValue.id)).first()  # type: ignore  # noqa: E501
+        return cast(ApttValue, item)
+
+    @staticmethod
+    def get_second_newest_by_patient_id(patient_id: int) -> Optional[ApttValue]:
+        session = BaseRepository.get_session()
+        # pylint: disable=E1101,C0301
+        items = session.query(ApttValue).filter(ApttValue.patient_id == patient_id) \
+            .order_by(desc(ApttValue.id)).all()  # type: ignore  # noqa: E501
+        
+        if len(items) > 1:
+            return cast(ApttValue, items[1])
+        return None
+
+    @staticmethod
+    def get_by_patient_id(patient_id: int) -> List[ApttValue]:
+        session = BaseRepository.get_session()
+        # pylint: disable=E1101,C0301
+        item = session.query(ApttValue) \
+            .order_by(desc(ApttValue.id)).all()  # type: ignore  # noqa: E501
+        return cast(List[ApttValue], item)
