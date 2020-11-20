@@ -95,13 +95,13 @@ class Recommendation(Resource):
         previous_appt = ApttValueRepository.get_second_newest_by_patient_id(pa.id)
 
         return recommended_heparin(
-            weight=pa.weight,
-            target_aptt_low=pa.target_aptt_low,
-            target_aptt_high=pa.target_aptt_high,
-            current_aptt=-1 if current_aptt is None else current_aptt.aptt_value,
-            previous_aptt=-1 if previous_appt is None else previous_appt.aptt_value,
-            solution_heparin_units=pa.solution_heparin_iu,
-            solution_ml=pa.solution_ml
+            weight=float(pa.weight),
+            target_aptt_low=float(pa.target_aptt_low),
+            target_aptt_high=float(pa.target_aptt_high),
+            current_aptt=-1 if current_aptt is None else float(current_aptt.aptt_value),
+            previous_aptt=-1 if previous_appt is None else float(previous_appt.aptt_value),
+            solution_heparin_units=float(pa.solution_heparin_iu),
+            solution_ml=float(pa.solution_ml)
         )
 
 
@@ -130,9 +130,9 @@ class Recommendation(Resource):
         aptts = ApttValueRepository.get_by_patient_id(patient_id)
 
         return {
-            'dosage_entries': [{'date': dosage.created_at, 'value': dosage.dosage_heparin_continuous} for dosage in
+            'dosage_entries': [{'date': dosage.created_at.isoformat(), 'value': float(dosage.dosage_heparin_continuous)} for dosage in
                                dosages],
-            'aptt_entries': [{'date': aptt.created_at, 'value': aptt.aptt_value} for aptt in aptts]
+            'aptt_entries': [{'date': aptt.created_at.isoformat(), 'value': float(aptt.aptt_value)} for aptt in aptts]
         }
 
 
@@ -145,16 +145,16 @@ def _patient_model_to_dto(pa: Patient) -> dict:
         'id': pa.id,
         'first_name': pa.first_name,
         'last_name': pa.last_name,
-        'date_of_birth': pa.date_of_birth,
-        'height': pa.height,
-        'weight': pa.weight,
+        'date_of_birth': pa.date_of_birth.isoformat(),
+        'height': float(pa.height),
+        'weight': float(pa.weight),
         'sex': pa.sex,
         'drug_type': DrugType.HEPARIN if pa.heparin else DrugType.INSULIN,
         'target_aptt': {
-            'low': pa.target_aptt_low,
-            'high': pa.target_aptt_high
+            'low': float(pa.target_aptt_low),
+            'high': float(pa.target_aptt_high)
         },
-        'actual_aptt': -1 if actual_appt is None else actual_appt.aptt_value,
-        'actual_aptt_updated_on': datetime.date(1970, 1, 1) if actual_appt is None else actual_appt.created_at,
-        'actual_dosage': -1 if heparin_dosage is None else heparin_dosage.dosage_heparin_continuous
+        'actual_aptt': -1 if actual_appt is None else float(actual_appt.aptt_value),
+        'actual_aptt_updated_on': datetime.date(1970, 1, 1).isoformat() if actual_appt is None else actual_appt.created_at.isoformat(),
+        'actual_dosage': -1 if heparin_dosage is None else float(heparin_dosage.dosage_heparin_continuous)
     }
