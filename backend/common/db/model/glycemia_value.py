@@ -11,7 +11,7 @@ class GlycemiaValue(Base):
     """
     GlycemiaValue class
     """
-    __tablename__ = "glycemia_value"
+    __tablename__ = "glycemia_values"
 
     id = Column(Integer, primary_key=True, autoincrement=True, nullable=False)
     patient_id = Column(
