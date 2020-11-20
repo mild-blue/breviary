@@ -18,7 +18,7 @@ namespace = Namespace('heparin-recommendation')
 heparin_recommendation_out_model = namespace.model('HeparinRecommendationOut', heparin_recommendation_out)
 
 
-@namespace.route('/heparin-recommendation')
+@namespace.route('/recommendation')
 class HeparinRecommendationApi(Resource):
     heparin_recommendation_in_model = namespace.model('HeparinRecommendationIn', {
         'weight': fields.Float(required=True),
