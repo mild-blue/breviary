@@ -5,8 +5,11 @@ import logging
 from flask import request
 from flask_restx import Resource, fields, Namespace
 
-from backend.api.v1.heparin_recommendation_dto_out import heparin_recommendation_out
+from backend.api.v1.heparin_recommendation_dto_out import heparin_recommendation_out, heparin_recommendation_to_out
 from backend.api.v1.shared_models import failed_response
+from backend.common.db.repository.aptt_value_repository import ApttValueRepository
+from backend.common.db.repository.heparin_dosage_repository import HeparinDosageRepository
+from backend.common.db.repository.patient_repository import PatientRepository
 from backend.heparin.heparin_dosage import recommended_heparin
 
 logger = logging.getLogger(__name__)
@@ -18,16 +21,11 @@ namespace = Namespace('heparin-recommendation')
 heparin_recommendation_out_model = namespace.model('HeparinRecommendationOut', heparin_recommendation_out)
 
 
-@namespace.route('/heparin-recommendation')
+@namespace.route('/recommendation')
 class HeparinRecommendationApi(Resource):
     heparin_recommendation_in_model = namespace.model('HeparinRecommendationIn', {
-        'weight': fields.Float(required=True),
-        'target_aptt_low': fields.Float(required=True),
-        'target_aptt_high': fields.Float(required=True),
+        'patient_id': fields.Integer(required=True),
         'current_aptt': fields.Float(required=True),
-        'previous_aptt': fields.Float(required=True),
-        'solution_heparin_units': fields.Float(required=True),
-        'solution_ml': fields.Float(required=True)
     })
 
     @namespace.doc(body=heparin_recommendation_in_model)
@@ -38,12 +36,28 @@ class HeparinRecommendationApi(Resource):
     @namespace.response(code=500, model=failed_response, description='Unexpected error, see contents for details.')
     def post(self):
         post_data = request.get_json()
-        return recommended_heparin(
-            weight=float(post_data['weight']),
-            target_aptt_low=float(post_data['target_aptt_low']),
-            target_aptt_high=float(post_data['target_aptt_high']),
-            current_aptt=float(post_data['current_aptt']),
-            previous_aptt=float(post_data['previous_aptt']),
-            solution_heparin_units=float(post_data['solution_heparin_units']),
-            solution_ml=float(post_data['solution_ml'])
-        )
+        patient_id = int(post_data['patient_id'])
+
+        pa = PatientRepository.get_by_id(patient_id)
+        if pa is None:
+            return None
+
+        current_aptt = ApttValueRepository.get_newest_by_patient_id(pa.id)
+        previous_appt = ApttValueRepository.get_second_newest_by_patient_id(pa.id)
+
+        current_dosage = HeparinDosageRepository.get_newest_by_patient_id(pa.id)
+        previous_dosage = HeparinDosageRepository.get_second_newest_by_patient_id(pa.id)
+
+        return heparin_recommendation_to_out(recommended_heparin(
+            weight=float(pa.height),
+            target_aptt_low=float(pa.target_aptt_low),
+            target_aptt_high=float(pa.target_aptt_high),
+            current_aptt=None if current_aptt is None else float(current_aptt.aptt_value),
+            previous_aptt=None if previous_appt is None else float(previous_appt.aptt_value),
+            solution_heparin_units=float(pa.solution_heparin_iu),
+            solution_ml=float(pa.solution_ml),
+            current_continuous_dosage=None if current_dosage is None else float(
+                current_dosage.dosage_heparin_continuous),
+            previous_continuous_dosage=None if previous_dosage is None else float(
+                previous_dosage.dosage_heparin_continuous)
+        ))
