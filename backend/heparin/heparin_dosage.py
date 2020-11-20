@@ -146,10 +146,16 @@ def _get_doctor_warning(current_aptt: float, previous_aptt: float, heparin_conti
         return None
 
 
-def recommended_heparin(weight: float, target_aptt_low: float, target_aptt_high: float, current_aptt: Optional[float],
-                        previous_aptt: Optional[float], solution_heparin_units: float,
-                        solution_ml: float, current_continuous_dosage: Optional[float],
-                        previous_continuous_dosage: Optional[float]) -> HeparinRecommendation:
+def recommended_heparin(weight: float,
+                        target_aptt_low: float,
+                        target_aptt_high: float,
+                        current_aptt: Optional[float],
+                        previous_aptt: Optional[float],
+                        solution_heparin_units: float,
+                        solution_ml: float,
+                        current_continuous_dosage: Optional[float],
+                        previous_continuous_dosage: Optional[float]) \
+        -> HeparinRecommendation:
     heparin_continuous_dosage, heparin_bolus_dosage = _calculate_recommended_dosage(weight, target_aptt_low,
                                                                                     target_aptt_high,
                                                                                     current_aptt,
