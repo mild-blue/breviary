@@ -49,6 +49,17 @@ class HeparinDosageRepository(BaseRepository):
         return cast(HeparinDosage, item)
 
     @staticmethod
+    def get_second_newest_by_patient_id(patient_id: int) -> Optional[HeparinDosage]:
+        session = BaseRepository.get_session()
+        # pylint: disable=E1101,C0301
+        items = session.query(HeparinDosage).filter(HeparinDosage.patient_id == patient_id) \
+            .order_by(desc(HeparinDosage.id)).all()  # type: ignore  # noqa: E501
+
+        if len(items) > 1:
+            return cast(HeparinDosage, items[1])
+        return None
+
+    @staticmethod
     def get_by_patient_id(patient_id: int) -> List[HeparinDosage]:
         session = BaseRepository.get_session()
         # pylint: disable=E1101,C0301
