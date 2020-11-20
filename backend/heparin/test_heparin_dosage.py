@@ -1,7 +1,8 @@
 import unittest
+from datetime import datetime, timedelta
 
 from backend.heparin.heparin_dosage import DEFAULT_WEIGHT_TO_DOSAGE, _linear_interpolation, \
-    _default_heparin_continuous_dosage
+    _default_heparin_continuous_dosage, recommended_heparin, REMAINDER_STANDARD_HOURS
 
 
 class TestHeparinDosage(unittest.TestCase):
@@ -29,3 +30,18 @@ class TestHeparinDosage(unittest.TestCase):
         ]
         for expected_dosage in expected_weight_to_dosage:
             self.assertEqual(_default_heparin_continuous_dosage(expected_dosage[0]), expected_dosage[1])
+
+    def test_recommended_heparin(self):
+        data_inputs = [(83, 1.5, 2, 1.8, None, 25000, 500, 20, None)]
+        expected_outputs = [(20, 0, REMAINDER_STANDARD_HOURS, None)]
+
+        for index in range(0, len(data_inputs) - 1):
+            data_input = data_inputs[index]
+            expected_output = expected_outputs[index]
+            reco = recommended_heparin(data_input[0], data_input[1], data_input[2], data_input[3], data_input[4],
+                                       data_input[5], data_input[6], data_input[7], data_input[8])
+            self.assertEqual(expected_output[0], reco.heparin_continuous_dosage)
+            self.assertEqual(expected_output[1], reco.heparin_bolus_dosage)
+            self.assertLess(datetime.now() + timedelta(hours=expected_output[2], minutes=-1), reco.next_remainder)
+            self.assertGreater(datetime.now() + timedelta(hours=expected_output[2], minutes=1), reco.next_remainder)
+            self.assertEqual(expected_output[3], reco.doctor_warning)
