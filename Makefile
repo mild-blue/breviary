@@ -25,6 +25,12 @@ conda-activate:
 db:
 	docker-compose up -d db
 
+run:
+	export FLASK_APP=backend.app:app; \
+	export FLASK_ENV=development; \
+	export FLASK_DEBUG=true; \
+	flask run --port=8080 --host=localhost
+
 build_and_push_worker:
 	. ./devops/build_and_push_to_dockerhub.sh && build_and_push_worker
 
