@@ -54,8 +54,8 @@ def create_app() -> Flask:
 
         api = Api(
             doc=_SWAGGER_URL,
-            version='0.1',
-            title='Medical OCR API',
+            version='1.0',
+            title='Breviary API',
             authorizations=authorizations,
         )
         api.init_app(app)
