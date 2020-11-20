@@ -2,7 +2,7 @@ import unittest
 from datetime import datetime, timedelta
 
 from backend.heparin.heparin_dosage import DEFAULT_WEIGHT_TO_DOSAGE, _linear_interpolation, \
-    _default_heparin_continuous_dosage, recommended_heparin, REMAINDER_STANDARD_HOURS
+    _default_heparin_continuous_dosage, recommended_heparin, REMAINDER_STANDARD_HOURS, REMAINDER_FIRST_HOURS
 
 
 class TestHeparinDosage(unittest.TestCase):
@@ -32,8 +32,14 @@ class TestHeparinDosage(unittest.TestCase):
             self.assertEqual(_default_heparin_continuous_dosage(expected_dosage[0]), expected_dosage[1])
 
     def test_recommended_heparin(self):
-        data_inputs = [(83, 1.5, 2, 1.8, None, 25000, 500, 20, None)]
-        expected_outputs = [(20, 0, REMAINDER_STANDARD_HOURS, None)]
+        data_inputs = [
+            (83, 1.5, 2, 1.8, None, 25000, 500, 20, None),
+            (83, 1.5, 2, None, None, 25000, 500, None, None)
+        ]
+        expected_outputs = [
+            (20, 0, REMAINDER_STANDARD_HOURS, None),
+            (30.0, 0, REMAINDER_FIRST_HOURS, None)
+        ]
 
         for index in range(0, len(data_inputs) - 1):
             data_input = data_inputs[index]
