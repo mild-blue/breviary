@@ -1,5 +1,6 @@
-from typing import List, Optional
+from typing import List, Optional, cast
 
+from sqlalchemy import desc
 from sqlalchemy.orm import Session  # pylint: disable=import-error
 
 from backend.common.db.database import get_db_session
@@ -38,3 +39,19 @@ class HeparinDosageRepository(BaseRepository):
     def get_by_id(idd: int) -> Optional[HeparinDosage]:
         sup = super(HeparinDosageRepository, HeparinDosageRepository)
         return sup.base_get_by_id(HeparinDosage, idd)  # type: ignore
+
+    @staticmethod
+    def get_newest_by_patient_id(patient_id: int) -> Optional[HeparinDosage]:
+        session = BaseRepository.get_session()
+        # pylint: disable=E1101,C0301
+        item = session.query(HeparinDosage).filter(HeparinDosage.patient_id == patient_id) \
+            .order_by(desc(HeparinDosage.id)).first()  # type: ignore  # noqa: E501
+        return cast(HeparinDosage, item)
+
+    @staticmethod
+    def get_by_patient_id(patient_id: int) -> List[HeparinDosage]:
+        session = BaseRepository.get_session()
+        # pylint: disable=E1101,C0301
+        item = session.query(HeparinDosage) \
+            .order_by(desc(HeparinDosage.id)).all()  # type: ignore  # noqa: E501
+        return cast(List[HeparinDosage], item)

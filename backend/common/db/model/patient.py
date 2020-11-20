@@ -40,7 +40,6 @@ class Patient(Base):
     def __init__(
             self,
             first_name: str,
-            pass_hash: str,
             last_name: str,
             date_of_birth: datetime,
             height: int,
