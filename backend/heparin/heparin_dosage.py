@@ -16,6 +16,6 @@ def recommended_heparin(weight: float, target_aptt_low: float, target_aptt_high:
     return 0
 
 
-def calculate_recommended_dosage(weight: float, target_aptt_low: float, target_aptt_high: float, current_aptt: float,
+def _calculate_recommended_dosage(weight: float, target_aptt_low: float, target_aptt_high: float, current_aptt: float,
                                  solution_heparin_units: float, solution_ml: float) -> float:
     return 0
