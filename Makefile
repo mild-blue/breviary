@@ -31,6 +31,16 @@ run:
 	export FLASK_DEBUG=true; \
 	flask run --port=8080 --host=localhost
 
+# get logs from the running service
+logs:
+	docker-compose -f docker-compose.yml logs --follow backend
+
+clean-db:
+	docker-compose stop db || true
+	docker-compose rm -f db || true
+	docker volume rm breviary_breviary-db || true
+	docker-compose up -d db
+
 build_and_push_worker:
 	. ./devops/build_and_push_to_dockerhub.sh && build_and_push_worker
 
