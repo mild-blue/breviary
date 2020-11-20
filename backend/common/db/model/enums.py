@@ -1,11 +1,11 @@
 from enum import Enum
 
 
-class DrugType(Enum, str):
+class DrugType(str, Enum):
     HEPARIN = 'HEPARIN'
     INSULIN = 'INSULIN'
 
 
-class Sex(Enum, str):
+class Sex(str, Enum):
     M = 'M'
     F = 'F'
