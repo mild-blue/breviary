@@ -20,3 +20,4 @@ dependencies:
       - sqlalchemy-stubs==0.3
       - typedload==2.3
       - yoyo-migrations==7.2.0
+      - python-dotenv==0.15.0
