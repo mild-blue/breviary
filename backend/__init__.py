@@ -9,6 +9,7 @@ from backend.api.v1.service_api import namespace as service_namespace
 from backend.api.v1.shared_models import namespace as shared_models_namespace
 from backend.api.v1.patients_api import namespace as patients_namespace
 from backend.api.v1.user_api import namespace as user_namespace
+from backend.common.logger import get_logger
 from backend.configuration.application_configuration import ApplicationConfiguration, get_application_configuration
 from backend.common.db.database import get_db_session, init_db, migrate_db, build_db_connection_string
 from backend.common.dto.database_configuration import DatabaseConfiguration
@@ -81,6 +82,7 @@ def create_app() -> Flask:
                 session.remove()
 
     with app.app_context():
+        get_logger()
         # load configuration
         load_local_development_config()
         conf = get_application_configuration()
