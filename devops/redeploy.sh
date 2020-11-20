@@ -28,7 +28,7 @@ function redeploy {
   docker pull "${BACKEND_IMAGE}"
 
   echo "Stop services."
-  docker-compose -f docker-compose.yml stop backend
+  docker-compose -f docker-compose.yml stop backend || true
   docker-compose rm -f backend || true
 
   echo "Deploying new version ${VERSION_TAG}."
