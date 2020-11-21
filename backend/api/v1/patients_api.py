@@ -133,41 +133,6 @@ class Patient(Resource):
         return _patient_model_to_dto(pa)
 
 
-@namespace.route('/recommendation/<patient_id>')
-class Recommendation(Resource):
-    @namespace.response(code=200,
-                        model=heparin_recommendation_out_model,
-                        description='')
-    @namespace.response(code=500,
-                        model=failed_response,
-                        description='Unexpected error, see contents for details.')
-    def get(self, patient_id: str):
-        patient_id = int(patient_id)
-        pa = PatientRepository.get_by_id(patient_id)
-        if pa is None:
-            return None
-
-        current_aptt = ApttValueRepository.get_newest_by_patient_id(pa.id)
-        previous_appt = ApttValueRepository.get_second_newest_by_patient_id(pa.id)
-
-        current_dosage = HeparinDosageRepository.get_newest_by_patient_id(pa.id)
-        previous_dosage = HeparinDosageRepository.get_second_newest_by_patient_id(pa.id)
-
-        return heparin_recommendation_to_out(recommended_heparin(
-            weight=float(pa.weight),
-            target_aptt_low=float(pa.target_aptt_low),
-            target_aptt_high=float(pa.target_aptt_high),
-            current_aptt=None if current_aptt is None else float(current_aptt.aptt_value),
-            previous_aptt=None if previous_appt is None else float(previous_appt.aptt_value),
-            solution_heparin_units=float(pa.solution_heparin_iu),
-            solution_ml=float(pa.solution_ml),
-            current_continuous_dosage=None if current_dosage is None else float(
-                current_dosage.dosage_heparin_continuous),
-            previous_continuous_dosage=None if previous_dosage is None else float(
-                previous_dosage.dosage_heparin_continuous)
-        ))
-
-
 dosage = namespace.model('DosageEntry', {
     'date': fields.DateTime(required=True),
     'value': fields.Float(required=True),
