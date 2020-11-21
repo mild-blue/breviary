@@ -29,7 +29,7 @@ class ApttValue(Base):
     def __init__(
             self,
             patient: Patient,
-            aptt_value: int
+            aptt_value: float
     ) -> None:
         self.patient = patient
         self.aptt_value = aptt_value
