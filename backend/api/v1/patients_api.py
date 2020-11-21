@@ -121,11 +121,17 @@ class Patient(Resource):
 
         put_data = request.get_json()
         if put_data['drug_type'] == DrugType.HEPARIN:
+            if put_data['target_aptt_low'] is None or put_data['target_aptt_high'] is None:
+                abort(400, f"'target_aptt_low' and 'target_aptt_high' must be set for 'drug_type' 'HEPARIN'.")
+
             pa.heparin = True
             pa.insulin = False
             pa.target_aptt_low = float(put_data['target_aptt_low'])
             pa.target_aptt_high = float(put_data['target_aptt_high'])
         else:
+            if put_data['tddi'] is None or put_data['target_glycemia'] is None:
+                abort(400, f"'tddi' and 'target_glycemia' must be set for 'drug_type' 'INSULIN'.")
+
             pa.heparin = False
             pa.insulin = True
             pa.tddi = float(put_data['tddi'])
