@@ -43,31 +43,19 @@ patient_out = namespace.model('PatientOut', {
     'previous_dosage': fields.Float(required=True),
 })
 
-patient_in_update = namespace.model('PatientInUpdate', {
+patient_in_post_put = namespace.model('PatientInPostPut', {
     'first_name': fields.String(required=True),
     'last_name': fields.String(required=True),
     'date_of_birth': fields.DateTime(required=True),
     'height': fields.Float(required=True),
     'weight': fields.Float(required=True),
-    'target_aptt_value': fields.Float(required=True)
-})
-
-patient_in_init = namespace.model('PatientInInit', {
+    'target_aptt_value': fields.Float(required=True),
     'drug_type': fields.String(required=True, enum=[drug.value for drug in DrugType]),
+    'sex': fields.String(required=True, enum=[sex.value for sex in Sex]),
     'target_aptt_low': fields.Float(required=False),  # HEPARIN
     'target_aptt_high': fields.Float(required=False),  # HEPARIN
     'tddi': fields.Float(required=False),  # INSULIN
     'target_glycemia': fields.Float(required=False)  # INSULIN
-})
-
-patient_in_post = namespace.model('PatientInPost', {
-    'id': fields.String(required=False),
-    'first_name': fields.String(required=True),
-    'last_name': fields.String(required=True),
-    'date_of_birth': fields.DateTime(required=True),
-    'height': fields.Float(required=True),
-    'weight': fields.Float(required=True),
-    'target_aptt_value': fields.Float(required=True)
 })
 
 
@@ -91,51 +79,49 @@ class PatientsLists(Resource):
 
         return result
 
-    @namespace.doc(body=patient_in_post)
+    @namespace.doc(body=patient_in_post_put)
     @namespace.response(code=200, model=patient_out, description='')
     @namespace.response(code=400, model=failed_response, description='')
     @namespace.response(code=401, model=failed_response, description='')
     @namespace.response(code=500, model=failed_response, description='')
     def post(self):
         post_data = request.get_json()
-        dummy_patient_id = post_data['id']
+        pa = PatientModel(
+            first_name=post_data['first_name'],
+            last_name=post_data['last_name'],
+            date_of_birth=_parse_datetime(post_data['date_of_birth']),
+            height=float(post_data['height']),
+            weight=float(post_data['weight']),
+            sex=post_data['sex'],
+            active=True,
+            heparin=False,
+            insulin=False,
+            target_aptt_low=None,
+            target_aptt_high=None,
+            solution_heparin_iu=None,
+            solution_ml=None,
+            tddi=None,
+            target_glycemia=None,
+            other_params={}
+        )
 
-        if dummy_patient_id is not None:  # QR code
-            pa = PatientRepository.get_first_inactive_patient()
-            if pa is None:
-                abort(404, f"Patient does not exist.")
+        return _update_patient(pa, post_data, True)
 
-            pa.active = True
-            pa = PatientRepository.base_update(pa)
-            return _patient_model_to_dto(pa)
 
-        else:  # Via form
-            post_data = request.get_json()
-            pa = PatientModel(
-                first_name=post_data['first_name'],
-                last_name=post_data['last_name'],
-                date_of_birth=_parse_datetime(post_data['date_of_birth']),
-                height=float(post_data['height']),
-                weight=float(post_data['weight']),
-                sex=None,
-                active=True,
-                heparin=False,
-                insulin=False,
-                target_aptt_low=None,
-                target_aptt_high=None,
-                solution_heparin_iu=None,
-                solution_ml=None,
-                tddi=None,
-                target_glycemia=None,
-                other_params={}
-            )
+@namespace.route('/qr-code')
+class PatientsLists(Resource):
+    @namespace.response(code=200, model=patient_out, description='')
+    @namespace.response(code=400, model=failed_response, description='')
+    @namespace.response(code=401, model=failed_response, description='')
+    @namespace.response(code=500, model=failed_response, description='')
+    def get(self):
+        pa = PatientRepository.get_first_inactive_patient()
+        if pa is None:
+            abort(404, f"Patient does not exist.")
 
-            pa = PatientRepository.create(pa, False)
-            ApttValueRepository.create(ApttValue(
-                patient=pa,
-                aptt_value=float(post_data['target_aptt_value'])
-            ))
-            return _patient_model_to_dto(pa)
+        pa.active = True
+        pa = PatientRepository.base_update(pa)
+        return _patient_model_to_dto(pa)
 
 
 @namespace.route('/<patient_id>')
@@ -153,7 +139,7 @@ class Patient(Resource):
         pa = PatientRepository.get_by_id(patient_id)
         return _patient_model_to_dto(pa)
 
-    @namespace.doc(body=patient_in_update)
+    @namespace.doc(body=patient_in_post_put)
     @namespace.response(code=200, model=patient_out, description='')
     @namespace.response(code=400, model=failed_response, description='')
     @namespace.response(code=401, model=failed_response, description='')
@@ -172,46 +158,9 @@ class Patient(Resource):
         pa.height = float(put_data['height'])
         pa.weight = float(put_data['weight'])
         pa.target_aptt_value = float(put_data['target_aptt_value'])
+        pa.sex = put_data['sex']
 
-        pa = PatientRepository.base_update(pa)
-        return _patient_model_to_dto(pa)
-
-
-@namespace.route('/init/<patient_id>')
-class Patient(Resource):
-    model = patient_out
-
-    @namespace.doc(body=patient_in_init)
-    @namespace.response(code=200, model=patient_out, description='')
-    @namespace.response(code=400, model=failed_response, description='')
-    @namespace.response(code=401, model=failed_response, description='')
-    @namespace.response(code=500, model=failed_response, description='')
-    def put(self, patient_id: str):
-        patient_id = int(patient_id)
-        pa = PatientRepository.get_by_id(patient_id)
-        if pa is None:
-            abort(404, f"Patient with id {patient_id} does not exist.")
-
-        put_data = request.get_json()
-        if put_data['drug_type'] == DrugType.HEPARIN:
-            if put_data['target_aptt_low'] is None or put_data['target_aptt_high'] is None:
-                abort(400, f"'target_aptt_low' and 'target_aptt_high' must be set for 'drug_type' 'HEPARIN'.")
-
-            pa.heparin = True
-            pa.insulin = False
-            pa.target_aptt_low = float(put_data['target_aptt_low'])
-            pa.target_aptt_high = float(put_data['target_aptt_high'])
-        else:
-            if put_data['tddi'] is None or put_data['target_glycemia'] is None:
-                abort(400, f"'tddi' and 'target_glycemia' must be set for 'drug_type' 'INSULIN'.")
-
-            pa.heparin = False
-            pa.insulin = True
-            pa.tddi = float(put_data['tddi'])
-            pa.target_glycemia = float(put_data['target_glycemia'])
-
-        pa = PatientRepository.base_update(pa)
-        return _patient_model_to_dto(pa)
+        return _update_patient(pa, put_data, False)
 
 
 history_entry_out = namespace.model('HistoryEntry', {
@@ -292,3 +241,32 @@ def _patient_model_to_dto(pa: Patient) -> dict:
 
 def _parse_datetime(dt: str) -> datetime:
     return datetime.datetime.strptime(dt, "%Y-%m-%dT%H:%M:%S.%fZ")
+
+
+def _update_patient(pa: PatientModel, data: dict, create: bool) -> dict:
+    if data['drug_type'] == DrugType.HEPARIN:
+        if data['target_aptt_low'] is None or data['target_aptt_high'] is None:
+            abort(400, f"'target_aptt_low' and 'target_aptt_high' must be set for 'drug_type' 'HEPARIN'.")
+
+        pa.heparin = True
+        pa.insulin = False
+        pa.target_aptt_low = float(data['target_aptt_low'])
+        pa.target_aptt_high = float(data['target_aptt_high'])
+    else:
+        if data['tddi'] is None or data['target_glycemia'] is None:
+            abort(400, f"'tddi' and 'target_glycemia' must be set for 'drug_type' 'INSULIN'.")
+
+        pa.heparin = False
+        pa.insulin = True
+        pa.tddi = float(data['tddi'])
+        pa.target_glycemia = float(data['target_glycemia'])
+
+    if create:
+        pa = PatientRepository.create(pa, False)
+    else:
+        pa = PatientRepository.base_update(pa, False)
+    ApttValueRepository.create(ApttValue(
+        patient=pa,
+        aptt_value=float(data['target_aptt_value'])
+    ))
+    return _patient_model_to_dto(pa)
