@@ -6,13 +6,14 @@ import logging
 from flask import request
 from flask_restx import Resource, Namespace, fields, abort
 
-from backend.api.v1.heparin_recommendation_dto_out import heparin_recommendation_out, heparin_recommendation_to_out
+from backend.api.v1.heparin_recommendation_dto_out import heparin_recommendation_out
 from backend.api.v1.shared_models import failed_response
+from backend.common.db.model.aptt_values import ApttValue
 from backend.common.db.model.enums import Sex, DrugType
+from backend.common.db.model.patient import Patient as PatientModel
 from backend.common.db.repository.aptt_value_repository import ApttValueRepository
 from backend.common.db.repository.heparin_dosage_repository import HeparinDosageRepository
 from backend.common.db.repository.patient_repository import PatientRepository
-from backend.heparin.heparin_dosage import recommended_heparin
 
 logger = logging.getLogger(__name__)
 
@@ -42,16 +43,31 @@ patient_out = namespace.model('PatientOut', {
     'previous_dosage': fields.Float(required=True),
 })
 
-patient_in = namespace.model('PatientIn', {
-    'id': fields.String(required=True)
+patient_in_update = namespace.model('PatientInUpdate', {
+    'first_name': fields.String(required=True),
+    'last_name': fields.String(required=True),
+    'date_of_birth': fields.DateTime(required=True),
+    'height': fields.Float(required=True),
+    'weight': fields.Float(required=True),
+    'target_aptt_value': fields.Float(required=True)
 })
 
-patient_in_update = namespace.model('PatientInUpdate', {
+patient_in_init = namespace.model('PatientInInit', {
     'drug_type': fields.String(required=True, enum=[drug.value for drug in DrugType]),
     'target_aptt_low': fields.Float(required=False),  # HEPARIN
     'target_aptt_high': fields.Float(required=False),  # HEPARIN
     'tddi': fields.Float(required=False),  # INSULIN
     'target_glycemia': fields.Float(required=False)  # INSULIN
+})
+
+patient_in_post = namespace.model('PatientInPost', {
+    'id': fields.String(required=False),
+    'first_name': fields.String(required=True),
+    'last_name': fields.String(required=True),
+    'date_of_birth': fields.DateTime(required=True),
+    'height': fields.Float(required=True),
+    'weight': fields.Float(required=True),
+    'target_aptt_value': fields.Float(required=True)
 })
 
 
@@ -75,7 +91,7 @@ class PatientsLists(Resource):
 
         return result
 
-    @namespace.doc(body=patient_in)
+    @namespace.doc(body=patient_in_post)
     @namespace.response(code=200, model=patient_out, description='')
     @namespace.response(code=400, model=failed_response, description='')
     @namespace.response(code=401, model=failed_response, description='')
@@ -83,14 +99,43 @@ class PatientsLists(Resource):
     def post(self):
         post_data = request.get_json()
         dummy_patient_id = post_data['id']
-        pa = PatientRepository.get_first_inactive_patient()
 
-        if pa is None:
-            abort(404, f"Patient does not exist.")
+        if dummy_patient_id is not None:  # QR code
+            pa = PatientRepository.get_first_inactive_patient()
+            if pa is None:
+                abort(404, f"Patient does not exist.")
 
-        pa.active = True
-        pa = PatientRepository.base_update(pa)
-        return _patient_model_to_dto(pa)
+            pa.active = True
+            pa = PatientRepository.base_update(pa)
+            return _patient_model_to_dto(pa)
+
+        else:  # Via form
+            post_data = request.get_json()
+            pa = PatientModel(
+                first_name=post_data['first_name'],
+                last_name=post_data['last_name'],
+                date_of_birth=_parse_datetime(post_data['date_of_birth']),
+                height=float(post_data['height']),
+                weight=float(post_data['weight']),
+                sex=None,
+                active=True,
+                heparin=False,
+                insulin=False,
+                target_aptt_low=None,
+                target_aptt_high=None,
+                solution_heparin_iu=None,
+                solution_ml=None,
+                tddi=None,
+                target_glycemia=None,
+                other_params={}
+            )
+
+            pa = PatientRepository.create(pa, False)
+            ApttValueRepository.create(ApttValue(
+                patient=pa,
+                aptt_value=float(post_data['target_aptt_value'])
+            ))
+            return _patient_model_to_dto(pa)
 
 
 @namespace.route('/<patient_id>')
@@ -109,6 +154,34 @@ class Patient(Resource):
         return _patient_model_to_dto(pa)
 
     @namespace.doc(body=patient_in_update)
+    @namespace.response(code=200, model=patient_out, description='')
+    @namespace.response(code=400, model=failed_response, description='')
+    @namespace.response(code=401, model=failed_response, description='')
+    @namespace.response(code=500, model=failed_response, description='')
+    def put(self, patient_id: str):
+        patient_id = int(patient_id)
+        pa = PatientRepository.get_by_id(patient_id)
+        if pa is None:
+            abort(404, f"Patient with id {patient_id} does not exist.")
+
+        put_data = request.get_json()
+
+        pa.first_name = put_data['first_name']
+        pa.last_name = put_data['last_name']
+        pa.date_of_birth = _parse_datetime(put_data['date_of_birth']),
+        pa.height = float(put_data['height'])
+        pa.weight = float(put_data['weight'])
+        pa.target_aptt_value = float(put_data['target_aptt_value'])
+
+        pa = PatientRepository.base_update(pa)
+        return _patient_model_to_dto(pa)
+
+
+@namespace.route('/init/<patient_id>')
+class Patient(Resource):
+    model = patient_out
+
+    @namespace.doc(body=patient_in_init)
     @namespace.response(code=200, model=patient_out, description='')
     @namespace.response(code=400, model=failed_response, description='')
     @namespace.response(code=401, model=failed_response, description='')
@@ -210,6 +283,12 @@ def _patient_model_to_dto(pa: Patient) -> dict:
         'actual_aptt_updated_on': datetime.date(1970, 1,
                                                 1).isoformat() if actual_appt is None else actual_appt.created_at.isoformat(),
         'previous_aptt': None if previous_appt is None else float(previous_appt.aptt_value),
-        'actual_dosage': None if actual_heparin_dosage is None else float(actual_heparin_dosage.dosage_heparin_continuous),
-        'previous_dosage': None if previous_heparin_dosage is None else float(previous_heparin_dosage.dosage_heparin_continuous)
+        'actual_dosage': None if actual_heparin_dosage is None else float(
+            actual_heparin_dosage.dosage_heparin_continuous),
+        'previous_dosage': None if previous_heparin_dosage is None else float(
+            previous_heparin_dosage.dosage_heparin_continuous)
     }
+
+
+def _parse_datetime(dt: str) -> datetime:
+    return datetime.datetime.strptime(dt, "%Y-%m-%dT%H:%M:%S.%fZ")
