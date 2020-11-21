@@ -29,8 +29,7 @@ class CarbohydrateIntakeValue(Base):
     def __init__(
             self,
             patient: Patient,
-            carbohydrate_intake_value: int,
-            dosage_heparin_bolus: int
+            carbohydrate_intake_value: float
     ) -> None:
         self.patient = patient
         self.carbohydrate_intake_value = carbohydrate_intake_value

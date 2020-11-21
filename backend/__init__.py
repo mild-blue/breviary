@@ -11,7 +11,7 @@ from backend.api.v1.patients_api import namespace as patients_namespace
 from backend.api.v1.service_api import namespace as service_namespace
 from backend.api.v1.shared_models import namespace as shared_models_namespace
 from backend.api.v1.user_api import namespace as user_namespace
-from backend.api.v1.heparin_recommendation_api import namespace as heparin_recommendation_namespace
+from backend.api.v1.recommendation_api import namespace as recommendation_namespace
 from backend.common.db.database import get_db_session, init_db, migrate_db, build_db_connection_string
 from backend.common.dto.database_configuration import DatabaseConfiguration
 from backend.common.logger import get_logger
@@ -68,7 +68,7 @@ def create_app() -> Flask:
         api.add_namespace(patients_namespace, path=f'{V1}/patients')
         api.add_namespace(service_namespace, path=f'{V1}/service')
         api.add_namespace(user_namespace, path=f'{V1}/user')
-        api.add_namespace(heparin_recommendation_namespace, path=f'{V1}/heparin-recommendation')
+        api.add_namespace(recommendation_namespace, path=f'{V1}/recommendation')
 
     def init_default_routes():
         # pylint: disable=unused-variable

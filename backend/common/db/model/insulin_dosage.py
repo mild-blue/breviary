@@ -29,7 +29,7 @@ class InsulinDosage(Base):
     def __init__(
             self,
             patient: Patient,
-            dosage_insulin: int
+            dosage_insulin: float
     ) -> None:
         self.patient = patient
         self.dosage_insulin = dosage_insulin

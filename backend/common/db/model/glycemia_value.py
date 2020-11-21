@@ -29,7 +29,7 @@ class GlycemiaValue(Base):
     def __init__(
             self,
             patient: Patient,
-            glycemia_value: int
+            glycemia_value: float
     ) -> None:
         self.patient = patient
         self.glycemia_value = glycemia_value

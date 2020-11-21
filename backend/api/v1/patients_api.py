@@ -6,9 +6,7 @@ import logging
 from flask import request
 from flask_restx import Resource, Namespace, fields, abort
 
-from backend.api.v1.heparin_recommendation_dto_out import heparin_recommendation_out
 from backend.api.v1.shared_models import failed_response
-from backend.common.db.model.aptt_values import ApttValue
 from backend.common.db.model.enums import Sex, DrugType
 from backend.common.db.model.patient import Patient as PatientModel
 from backend.common.db.repository.aptt_value_repository import ApttValueRepository
@@ -18,8 +16,6 @@ from backend.common.db.repository.patient_repository import PatientRepository
 logger = logging.getLogger(__name__)
 
 namespace = Namespace('patients')
-
-heparin_recommendation_out_model = namespace.model('HeparinRecommendationOut', heparin_recommendation_out)
 
 target_aptt = namespace.model('TargetAptt', {
     'low': fields.Float(requred=True),
@@ -49,7 +45,6 @@ patient_in_post_put = namespace.model('PatientInPostPut', {
     'date_of_birth': fields.DateTime(required=True),
     'height': fields.Float(required=True),
     'weight': fields.Float(required=True),
-    'target_aptt_value': fields.Float(required=True),
     'drug_type': fields.String(required=True, enum=[drug.value for drug in DrugType]),
     'sex': fields.String(required=True, enum=[sex.value for sex in Sex]),
     'target_aptt_low': fields.Float(required=False),  # HEPARIN
@@ -98,8 +93,8 @@ class PatientsLists(Resource):
             insulin=False,
             target_aptt_low=None,
             target_aptt_high=None,
-            solution_heparin_iu=None,
-            solution_ml=None,
+            solution_heparin_iu=25000,
+            solution_ml=500,
             tddi=None,
             target_glycemia=None,
             other_params={}
@@ -157,7 +152,6 @@ class Patient(Resource):
         pa.date_of_birth = _parse_datetime(put_data['date_of_birth']),
         pa.height = float(put_data['height'])
         pa.weight = float(put_data['weight'])
-        pa.target_aptt_value = float(put_data['target_aptt_value'])
         pa.sex = put_data['sex']
 
         return _update_patient(pa, put_data, False)
@@ -265,8 +259,4 @@ def _update_patient(pa: PatientModel, data: dict, create: bool) -> dict:
         pa = PatientRepository.create(pa, False)
     else:
         pa = PatientRepository.base_update(pa, False)
-    ApttValueRepository.create(ApttValue(
-        patient=pa,
-        aptt_value=float(data['target_aptt_value'])
-    ))
     return _patient_model_to_dto(pa)
