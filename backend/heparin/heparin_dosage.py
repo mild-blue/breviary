@@ -157,5 +157,5 @@ def recommended_heparin(weight: kilogram,
 
 
 if __name__ == '__main__':
-    reco = recommended_heparin(99, 1.5, 2, 2.8, 3.2, 25000, 500, 16, 20)
+    reco = recommended_heparin(89, 1.5, 2, 2.8, 3.2, 25000, 500, 16, 20)
     print(reco.heparin_continuous_dosage, reco.heparin_bolus_dosage, reco.next_remainder, reco.doctor_warning)
