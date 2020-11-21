@@ -68,7 +68,7 @@ class PatientsLists(Resource):
                         model=failed_response,
                         description='Unexpected error, see contents for details.')
     def get(self):
-        patients = PatientRepository.get_all()
+        patients = PatientRepository.get_all_active()
         result = []
         for pa in patients:
             result.append(_patient_model_to_dto(pa))
