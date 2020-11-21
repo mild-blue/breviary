@@ -256,7 +256,7 @@ def _update_patient(pa: PatientModel, data: dict, create: bool) -> dict:
         pa.target_glycemia = float(data['target_glycemia'])
 
     if create:
-        pa = PatientRepository.create(pa, False)
+        pa = PatientRepository.create(pa)
     else:
-        pa = PatientRepository.base_update(pa, False)
+        pa = PatientRepository.base_update(pa)
     return _patient_model_to_dto(pa)
