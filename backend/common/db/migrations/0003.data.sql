@@ -21,8 +21,8 @@ VALUES (1,
         2.3,
         25000,
         500,
-        12,
-        36,
+        55,
+        6,
         '{}');
 
 INSERT INTO patients (id, first_name, last_name, date_of_birth, height, weight, sex, active, heparin, insulin,
@@ -43,8 +43,8 @@ VALUES (2,
         2.3,
         25000,
         500,
-        12,
-        36,
+        52,
+        7,
         '{}');
 
 ---
