@@ -73,7 +73,7 @@ def _calculate_recommended_dosage(weight: kilogram,
                                   current_continuous_dosage: Optional[float],
                                   previous_continuous_dosage: Optional[float]) -> \
         (float, float):  # (continuous_dosage, bolus)
-    if current_aptt is None:  # initial setup, no measurements yet
+    if current_aptt is None or current_continuous_dosage is None:  # initial setup, no measurements yet
         return _default_heparin_continuous_dosage(weight, solution_heparin_units, solution_ml), 0
     elif current_continuous_dosage == 0:
         return _get_new_dosage(previous_continuous_dosage, weight, HIGHEST_APTT_DOSAGE_PER_KG_CHANGE,
