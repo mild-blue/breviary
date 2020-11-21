@@ -116,16 +116,17 @@ def _get_doctor_warning(current_aptt: float,
                         weight: kilogram,
                         solution_heparin_units: float,
                         solution_ml: milliliter) -> Optional[str]:
+    dosage_diff = abs(heparin_continuous_dosage - _default_heparin_continuous_dosage(weight, solution_heparin_units,
+                                                                                     solution_ml))
     if current_aptt is None or previous_aptt is None or heparin_continuous_dosage is None:
         return None
     elif current_aptt < LOWEST_APTT > previous_aptt:
         return f"aPTT below {LOWEST_APTT} for 2 consecutive measurements."
     elif current_aptt > HIGHEST_APTT < previous_aptt:
         return f"aPTT above {HIGHEST_APTT} for 2 consecutive measurements."
-    elif abs(heparin_continuous_dosage - _default_heparin_continuous_dosage(weight, solution_heparin_units,
-                                                                            solution_ml)) >= EXTREME_DOSAGE_DIFF:
+    elif dosage_diff >= EXTREME_DOSAGE_DIFF:
         return f"Current continuous heparin dosage differs from default weight based dosage by " \
-               f"{abs(heparin_continuous_dosage - _default_heparin_continuous_dosage(weight, solution_heparin_units, solution_ml))}"
+               f"{round(dosage_diff,1)}."
     else:
         return None
 
