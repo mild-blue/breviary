@@ -75,10 +75,11 @@ def _default_heparin_continuous_dosage(patient_weight: float) -> float:
     if patient_weight >= DEFAULT_WEIGHT_TO_DOSAGE[-1][0]:
         return DEFAULT_WEIGHT_TO_DOSAGE[-1][1]
 
-    for index in range(0, len(DEFAULT_WEIGHT_TO_DOSAGE) - 1):
+    for index in range(0, len(DEFAULT_WEIGHT_TO_DOSAGE)):
         if patient_weight <= DEFAULT_WEIGHT_TO_DOSAGE[index][0]:
             return _linear_interpolation(patient_weight, DEFAULT_WEIGHT_TO_DOSAGE[index - 1],
                                          DEFAULT_WEIGHT_TO_DOSAGE[index])
+    raise AssertionError("Value should be always returned. Some issue with the code")
 
 
 def _get_new_dosage(current_dosage: float, weight: float, units_per_kg: float, solution_heparin_units: float,
