@@ -7,10 +7,12 @@ from flask_restx import Resource, fields, Namespace, abort
 
 from backend.api.v1.shared_models import failed_response
 from backend.common.db.model.aptt_values import ApttValue
+from backend.common.db.model.carbohydrate_intake_value import CarbohydrateIntakeValue
 from backend.common.db.model.glycemia_value import GlycemiaValue
 from backend.common.db.model.heparin_dosage import HeparinDosage
 from backend.common.db.model.insulin_dosage import InsulinDosage
 from backend.common.db.repository.aptt_value_repository import ApttValueRepository
+from backend.common.db.repository.carbohydrate_intake_value_repository import CarbohydrateIntakeValueRepository
 from backend.common.db.repository.glycemia_value_repository import GlycemiaValueRepository
 from backend.common.db.repository.heparin_dosage_repository import HeparinDosageRepository
 from backend.common.db.repository.insulin_dosage_repository import InsulinDosageRepository
@@ -155,17 +157,23 @@ class InsulinRecommendationApi(Resource):
             abort(400, f"Patient {patient_id} is not on INSULIN.")
 
         current_glycemia = float(post_data['current_glycemia'])
+        expected_carbohydrate_intake = float(post_data['expected_carbohydrate_intake'])
 
         GlycemiaValueRepository.create(GlycemiaValue(
             patient=pa,
             glycemia_value=current_glycemia
         ), False)
 
+        CarbohydrateIntakeValueRepository.create(CarbohydrateIntakeValue(
+            patient=pa,
+            carbohydrate_intake_value=expected_carbohydrate_intake
+        ), False)
+
         insulin_recommendation = recommended_insulin(
             tddi=float(pa.tddi),
             target_glycemia=float(pa.target_glycemia),
             current_glycemia=current_glycemia,
-            expected_carbohydrate_intake=float(post_data['expected_carbohydrate_intake'])
+            expected_carbohydrate_intake=expected_carbohydrate_intake
         )
 
         logger.info(
