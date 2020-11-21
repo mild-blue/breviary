@@ -7,6 +7,7 @@ from flask_restx import Resource, fields, Namespace
 
 from backend.api.v1.heparin_recommendation_dto_out import heparin_recommendation_out, heparin_recommendation_to_out
 from backend.api.v1.shared_models import failed_response
+from backend.common.db.model.aptt_values import ApttValue
 from backend.common.db.repository.aptt_value_repository import ApttValueRepository
 from backend.common.db.repository.heparin_dosage_repository import HeparinDosageRepository
 from backend.common.db.repository.patient_repository import PatientRepository
@@ -42,8 +43,14 @@ class HeparinRecommendationApi(Resource):
         if pa is None:
             return None
 
-        current_aptt = ApttValueRepository.get_newest_by_patient_id(pa.id)
-        previous_appt = ApttValueRepository.get_second_newest_by_patient_id(pa.id)
+        current_aptt = float(post_data['current_aptt'])
+
+        ApttValueRepository.create(ApttValue(
+            patient=pa,
+            aptt_value=current_aptt
+        ))
+
+        previous_aptt = ApttValueRepository.get_newest_by_patient_id(pa.id)
 
         current_dosage = HeparinDosageRepository.get_newest_by_patient_id(pa.id)
         previous_dosage = HeparinDosageRepository.get_second_newest_by_patient_id(pa.id)
@@ -52,8 +59,8 @@ class HeparinRecommendationApi(Resource):
             weight=float(pa.weight),
             target_aptt_low=float(pa.target_aptt_low),
             target_aptt_high=float(pa.target_aptt_high),
-            current_aptt=None if current_aptt is None else float(current_aptt.aptt_value),
-            previous_aptt=None if previous_appt is None else float(previous_appt.aptt_value),
+            current_aptt=current_aptt,
+            previous_aptt=None if previous_aptt is None else float(previous_aptt.aptt_value),
             solution_heparin_units=float(pa.solution_heparin_iu),
             solution_ml=float(pa.solution_ml),
             current_continuous_dosage=None if current_dosage is None else float(

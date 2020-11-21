@@ -6,7 +6,7 @@ from flask_restx import fields
 from backend.heparin.heparin_dosage import HeparinRecommendation
 
 heparin_recommendation_out = {
-    'heparin_continuous_dosage': fields.Float(required=True, description='Heparin countinuous dosage.'),
+    'heparin_continuous_dosage': fields.Float(required=True, description='Heparin continuous dosage.'),
     'heparin_bolus_dosage': fields.Float(required=True, description='Heparin bolus dosage.'),
     'next_remainder': fields.DateTime(required=True, description='Next reminder.'),
     'doctor_warning': fields.String(required=False, description='Doctor warning.'),
