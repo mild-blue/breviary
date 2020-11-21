@@ -2,7 +2,8 @@ import unittest
 from datetime import datetime, timedelta
 
 from backend.heparin.heparin_dosage import DEFAULT_WEIGHT_TO_DOSAGE, _linear_interpolation, \
-    _default_heparin_continuous_dosage, recommended_heparin, REMAINDER_STANDARD_HOURS
+    _default_heparin_continuous_dosage, recommended_heparin, REMAINDER_STANDARD_HOURS, REMAINDER_FIRST_HOURS, \
+    LOWEST_APTT, REMAINDER_NONCOAGULATING_HOURS, HIGHEST_APTT
 
 
 class TestHeparinDosage(unittest.TestCase):
@@ -32,10 +33,29 @@ class TestHeparinDosage(unittest.TestCase):
             self.assertEqual(_default_heparin_continuous_dosage(expected_dosage[0]), expected_dosage[1])
 
     def test_recommended_heparin(self):
-        data_inputs = [(83, 1.5, 2, 1.8, None, 25000, 500, 20, None)]
-        expected_outputs = [(20, 0, REMAINDER_STANDARD_HOURS, None)]
+        data_inputs = [
+            (83, 1.5, 2, 1.8, None, 25000, 500, 20, None),
+            (83, 1.5, 2, None, None, 25000, 500, None, None),
+            (83, 1.5, 2, 1.1, 1.15, 25000, 500, 25, 26),
+            (83, 1.5, 2, 3.8, 3.6, 25000, 500, 25, 26),
+            (83, 1.5, 2, 2.8, 3.6, 25000, 500, 0, 26),
+            (83, 1.5, 2, 2.8, 3.2, 25000, 500, 16, 20),
+            (99, 1.5, 2, 2.8, 3.2, 25000, 500, 16, 20)
+        ]
+        expected_outputs = [
+            (20, 0, REMAINDER_STANDARD_HOURS, None),
+            (30.0, 0, REMAINDER_FIRST_HOURS, None),
+            (31.64, 132.8, REMAINDER_STANDARD_HOURS, f"aPTT below {LOWEST_APTT} for 2 consecutive measurements."),
+            (0, 0, REMAINDER_NONCOAGULATING_HOURS, f"aPTT above {HIGHEST_APTT} for 2 consecutive measurements."),
+            (21.02, 0, REMAINDER_STANDARD_HOURS, None),
+            (12.68, 0, REMAINDER_STANDARD_HOURS,
+             "Current continuous heparin dosage differs from default weight based dosage by 17.32"),
+            (12.04, 0, REMAINDER_STANDARD_HOURS,
+             "Current continuous heparin dosage differs from default weight based dosage by 23.46")
 
-        for index in range(0, len(data_inputs) - 1):
+        ]
+
+        for index in range(0, len(data_inputs)):
             data_input = data_inputs[index]
             expected_output = expected_outputs[index]
             reco = recommended_heparin(data_input[0], data_input[1], data_input[2], data_input[3], data_input[4],

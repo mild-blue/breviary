@@ -75,10 +75,11 @@ def _default_heparin_continuous_dosage(patient_weight: float) -> float:
     if patient_weight >= DEFAULT_WEIGHT_TO_DOSAGE[-1][0]:
         return DEFAULT_WEIGHT_TO_DOSAGE[-1][1]
 
-    for index in range(0, len(DEFAULT_WEIGHT_TO_DOSAGE) - 1):
+    for index in range(0, len(DEFAULT_WEIGHT_TO_DOSAGE)):
         if patient_weight <= DEFAULT_WEIGHT_TO_DOSAGE[index][0]:
             return _linear_interpolation(patient_weight, DEFAULT_WEIGHT_TO_DOSAGE[index - 1],
                                          DEFAULT_WEIGHT_TO_DOSAGE[index])
+    raise AssertionError("Value should be always returned. Some issue with the code")
 
 
 def _get_new_dosage(current_dosage: float, weight: float, units_per_kg: float, solution_heparin_units: float,
@@ -90,15 +91,20 @@ def _calculate_bolus(weight: float, solution_heparin_units: float, solution_ml: 
     return units_per_kg * weight * solution_ml / solution_heparin_units
 
 
-def _calculate_recommended_dosage(weight: float, target_aptt_low: float, target_aptt_high: float, current_aptt: float,
-                                  solution_heparin_units: float, solution_ml: float,
-                                  current_continuous_dosage: float, previous_continuous_dosage: float) -> \
+def _calculate_recommended_dosage(weight: float,
+                                  target_aptt_low: float,
+                                  target_aptt_high: float,
+                                  current_aptt: Optional[float],
+                                  solution_heparin_units: float,
+                                  solution_ml: float,
+                                  current_continuous_dosage: Optional[float],
+                                  previous_continuous_dosage: Optional[float]) -> \
         (float, float):  # (continuous_dosage, bolus)
-    if current_continuous_dosage == 0:
-        return _get_new_dosage(previous_continuous_dosage, weight, HIGHEST_APTT_DOSAGE_PER_KG_CHANGE,
-                               solution_heparin_units, solution_ml)
     if current_aptt is None:  # initial setup, no measurements yet
         return _default_heparin_continuous_dosage(weight), 0
+    elif current_continuous_dosage == 0:
+        return _get_new_dosage(previous_continuous_dosage, weight, HIGHEST_APTT_DOSAGE_PER_KG_CHANGE,
+                               solution_heparin_units, solution_ml), 0
     elif current_aptt < LOWEST_APTT:
         return _get_new_dosage(current_continuous_dosage, weight, LOWEST_APTT_DOSAGE_PER_KG_CHANGE,
                                solution_heparin_units, solution_ml), \
@@ -133,9 +139,11 @@ def _get_next_remainder(current_aptt: float, heparin_continuous_dosage: float) -
 
 def _get_doctor_warning(current_aptt: float, previous_aptt: float, heparin_continuous_dosage: float,
                         weight: float) -> Optional[str]:
-    if current_aptt < LOWEST_APTT and previous_aptt < LOWEST_APTT:
+    if current_aptt is None or previous_aptt is None or heparin_continuous_dosage is None:
+        return None
+    elif current_aptt < LOWEST_APTT > previous_aptt:
         return f"aPTT below {LOWEST_APTT} for 2 consecutive measurements."
-    elif current_aptt > HIGHEST_APTT and previous_aptt > HIGHEST_APTT:
+    elif current_aptt > HIGHEST_APTT < previous_aptt:
         return f"aPTT above {HIGHEST_APTT} for 2 consecutive measurements."
     elif abs(heparin_continuous_dosage - _default_heparin_continuous_dosage(weight)) >= EXTREME_DOSAGE_DIFF:
         return f"Current continuous heparin dosage differs from default weight based dosage by " \
@@ -144,21 +152,22 @@ def _get_doctor_warning(current_aptt: float, previous_aptt: float, heparin_conti
         return None
 
 
-def recommended_heparin(
-        weight: float,
-        target_aptt_low: float,
-        target_aptt_high: float,
-        current_aptt: Optional[float],
-        previous_aptt: Optional[float],
-        solution_heparin_units: float,
-        solution_ml: float,
-        current_continuous_dosage: float,
-        previous_continuous_dosage: Optional[float]
-) -> HeparinRecommendation:
-    heparin_continuous_dosage, heparin_bolus_dosage = _calculate_recommended_dosage(weight, target_aptt_low,
+def recommended_heparin(weight: float,
+                        target_aptt_low: float,
+                        target_aptt_high: float,
+                        current_aptt: Optional[float],
+                        previous_aptt: Optional[float],
+                        solution_heparin_units: float,
+                        solution_ml: float,
+                        current_continuous_dosage: Optional[float],
+                        previous_continuous_dosage: Optional[float]) \
+        -> HeparinRecommendation:
+    heparin_continuous_dosage, heparin_bolus_dosage = _calculate_recommended_dosage(weight,
+                                                                                    target_aptt_low,
                                                                                     target_aptt_high,
                                                                                     current_aptt,
-                                                                                    solution_heparin_units, solution_ml,
+                                                                                    solution_heparin_units,
+                                                                                    solution_ml,
                                                                                     current_continuous_dosage,
                                                                                     previous_continuous_dosage)
     next_remainder = _get_next_remainder(current_aptt, heparin_continuous_dosage)
@@ -167,5 +176,5 @@ def recommended_heparin(
 
 
 if __name__ == '__main__':
-    reco = recommended_heparin(83, 1.5, 2, 1.8, None, 25000, 500, 20, None)
+    reco = recommended_heparin(99, 1.5, 2, 2.8, 3.2, 25000, 500, 16, 20)
     print(reco.heparin_continuous_dosage, reco.heparin_bolus_dosage, reco.next_remainder, reco.doctor_warning)
