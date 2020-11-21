@@ -3,7 +3,7 @@
 import logging
 
 from flask import request
-from flask_restx import Resource, fields, Namespace
+from flask_restx import Resource, fields, Namespace, abort
 
 from backend.api.v1.heparin_recommendation_dto_out import heparin_recommendation_out, heparin_recommendation_to_out
 from backend.api.v1.shared_models import failed_response
@@ -42,7 +42,7 @@ class HeparinRecommendationApi(Resource):
 
         pa = PatientRepository.get_by_id(patient_id)
         if pa is None:
-            return None
+            abort(404, f"Patient with id {patient_id} does not exist.")
 
         current_aptt = float(post_data['current_aptt'])
         previous_aptt = ApttValueRepository.get_newest_by_patient_id(pa.id)

@@ -4,7 +4,7 @@ import datetime
 import logging
 
 from flask import request
-from flask_restx import Resource, Namespace, fields
+from flask_restx import Resource, Namespace, fields, abort
 
 from backend.api.v1.heparin_recommendation_dto_out import heparin_recommendation_out, heparin_recommendation_to_out
 from backend.api.v1.shared_models import failed_response
@@ -84,7 +84,7 @@ class PatientsLists(Resource):
         pa = PatientRepository.get_first_inactive_patient()
 
         if pa is None:
-            return None
+            abort(404, f"Patient does not exist.")
 
         pa.active = True
         pa = PatientRepository.base_update(pa)
@@ -115,7 +115,7 @@ class Patient(Resource):
         patient_id = int(patient_id)
         pa = PatientRepository.get_by_id(patient_id)
         if pa is None:
-            return None
+            abort(404, f"Patient with id {patient_id} does not exist.")
 
         put_data = request.get_json()
         if put_data['drug_type'] == DrugType.HEPARIN:
@@ -176,7 +176,7 @@ class Recommendation(Resource):
 
 def _patient_model_to_dto(pa: Patient) -> dict:
     if pa is None:
-        return None
+        abort(404, f"Patient does not exist.")
 
     actual_appt = ApttValueRepository.get_newest_by_patient_id(pa.id)
     heparin_dosage = HeparinDosageRepository.get_newest_by_patient_id(pa.id)
