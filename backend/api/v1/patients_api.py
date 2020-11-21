@@ -133,17 +133,18 @@ class Patient(Resource):
         return _patient_model_to_dto(pa)
 
 
-dosage = namespace.model('DosageEntry', {
+history_entry_out = namespace.model('HistoryEntry', {
     'date': fields.DateTime(required=True),
-    'value': fields.Float(required=True),
+    'aptt': fields.Float(required=True),
+    'bolus': fields.Float(required=True),
+    'heparin_continuous': fields.Float(required=True)
 })
 
 
 @namespace.route('/history-entries/<patient_id>')
 class Recommendation(Resource):
     model = namespace.model('HistoryEntries', {
-        'dosage_entries': fields.List(required=True, cls_or_instance=fields.Nested(dosage)),
-        'aptt_entries': fields.Float(required=True, cls_or_instance=fields.Nested(dosage))
+        'entries': fields.List(required=True, cls_or_instance=fields.Nested(history_entry_out)),
     })
 
     @namespace.response(code=200,
@@ -157,12 +158,20 @@ class Recommendation(Resource):
         dosages = HeparinDosageRepository.get_by_patient_id(patient_id)
         aptts = ApttValueRepository.get_by_patient_id(patient_id)
 
-        return {
-            'dosage_entries': [{'date': dosage.created_at.isoformat(), 'value': float(dosage.dosage_heparin_continuous)}
-                               for dosage in
-                               dosages],
-            'aptt_entries': [{'date': aptt.created_at.isoformat(), 'value': float(aptt.aptt_value)} for aptt in aptts]
-        }
+        min_len = min(len(dosages), len(aptts))
+        result = []
+
+        for i in range(0, min_len):
+            dosage = dosages[i]
+            aptt = aptts[i]
+            result.append({
+                'date': dosage.created_at.isoformat(),
+                'aptt': float(aptt.aptt_value),
+                'bolus': float(dosage.dosage_heparin_bolus),
+                'heparin_continuous': float(dosage.dosage_heparin_continuous)
+            })
+
+        return result
 
 
 def _patient_model_to_dto(pa: Patient) -> dict:
