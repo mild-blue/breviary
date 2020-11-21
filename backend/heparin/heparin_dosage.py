@@ -94,17 +94,17 @@ def _calculate_bolus(weight: float, solution_heparin_units: float, solution_ml: 
 def _calculate_recommended_dosage(weight: float,
                                   target_aptt_low: float,
                                   target_aptt_high: float,
-                                  current_aptt: float,
+                                  current_aptt: Optional[float],
                                   solution_heparin_units: float,
                                   solution_ml: float,
-                                  current_continuous_dosage: float,
-                                  previous_continuous_dosage: float) -> \
+                                  current_continuous_dosage: Optional[float],
+                                  previous_continuous_dosage: Optional[float]) -> \
         (float, float):  # (continuous_dosage, bolus)
-    if current_continuous_dosage == 0:
-        return _get_new_dosage(previous_continuous_dosage, weight, HIGHEST_APTT_DOSAGE_PER_KG_CHANGE,
-                               solution_heparin_units, solution_ml), 0
     if current_aptt is None:  # initial setup, no measurements yet
         return _default_heparin_continuous_dosage(weight), 0
+    elif current_continuous_dosage == 0:
+        return _get_new_dosage(previous_continuous_dosage, weight, HIGHEST_APTT_DOSAGE_PER_KG_CHANGE,
+                               solution_heparin_units, solution_ml), 0
     elif current_aptt < LOWEST_APTT:
         return _get_new_dosage(current_continuous_dosage, weight, LOWEST_APTT_DOSAGE_PER_KG_CHANGE,
                                solution_heparin_units, solution_ml), \
