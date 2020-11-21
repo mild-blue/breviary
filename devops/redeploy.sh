@@ -24,6 +24,10 @@ function redeploy {
   export VERSION_TAG="latest"
   BACKEND_IMAGE="mildblue/breviary:${VERSION_TAG}"
 
+  # free some nice space
+  echo "Removing unused Docker images"
+  docker image prune -af
+
   echo "Pull ${BACKEND_IMAGE} image."
   docker pull "${BACKEND_IMAGE}"
 
