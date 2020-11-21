@@ -8,6 +8,7 @@ from flask_restx import Resource, fields, Namespace
 from backend.api.v1.heparin_recommendation_dto_out import heparin_recommendation_out, heparin_recommendation_to_out
 from backend.api.v1.shared_models import failed_response
 from backend.common.db.model.aptt_values import ApttValue
+from backend.common.db.model.heparin_dosage import HeparinDosage
 from backend.common.db.repository.aptt_value_repository import ApttValueRepository
 from backend.common.db.repository.heparin_dosage_repository import HeparinDosageRepository
 from backend.common.db.repository.patient_repository import PatientRepository
@@ -44,20 +45,19 @@ class HeparinRecommendationApi(Resource):
             return None
 
         current_aptt = float(post_data['current_aptt'])
+        previous_aptt = ApttValueRepository.get_newest_by_patient_id(pa.id)
 
         ApttValueRepository.create(ApttValue(
             patient=pa,
             aptt_value=current_aptt
         ))
 
-        previous_aptt = ApttValueRepository.get_newest_by_patient_id(pa.id)
-
         current_dosage = HeparinDosageRepository.get_newest_by_patient_id(pa.id)
         previous_dosage = HeparinDosageRepository.get_second_newest_by_patient_id(pa.id)
 
         is_heparin = pa.heparin
 
-        return heparin_recommendation_to_out(recommended_heparin(
+        recommendation_heparin = recommended_heparin(
             weight=float(pa.weight),
             target_aptt_low=float(pa.target_aptt_low),
             target_aptt_high=float(pa.target_aptt_high) if is_heparin else None,
@@ -69,4 +69,15 @@ class HeparinRecommendationApi(Resource):
                 current_dosage.dosage_heparin_continuous),
             previous_continuous_dosage=None if previous_dosage is None else float(
                 previous_dosage.dosage_heparin_continuous)
+        )
+
+        logger.info(
+            f"Recommendation. Pump speed: {recommendation_heparin.heparin_continuous_dosage}, bolus: {recommendation_heparin.heparin_bolus_dosage}, next remainder {recommendation_heparin.next_remainder}, warning: {recommendation_heparin.doctor_warning}")
+
+        HeparinDosageRepository.create(HeparinDosage(
+            patient=pa,
+            dosage_heparin_continuous=recommendation_heparin.heparin_continuous_dosage,
+            dosage_heparin_bolus=recommendation_heparin.heparin_bolus_dosage
         ))
+
+        return heparin_recommendation_to_out(recommendation_heparin)
