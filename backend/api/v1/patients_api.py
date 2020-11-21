@@ -22,7 +22,7 @@ heparin_recommendation_out_model = namespace.model('HeparinRecommendationOut', h
 
 target_aptt = namespace.model('TargetAptt', {
     'low': fields.Float(requred=True),
-    '': fields.Float(requred=True),
+    'high': fields.Float(requred=True),
 })
 
 patient_out = namespace.model('PatientOut', {
