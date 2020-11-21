@@ -24,7 +24,7 @@ CREATE TABLE patients
     target_aptt_high    NUMERIC,              --NOT NULL if heparin=TRUE
     solution_heparin_iu NUMERIC,              --NOT NULL if heparin=TRUE
     solution_ml         NUMERIC,              --NOT NULL if heparin=TRUE
-    tddi                NUMERIC,              -- NOT NULL if insulin=TRUE
+    tddi                NUMERIC,              -- NOT NULL if insulin=TRUE; total daily dose of insulin
     target_glycemia     NUMERIC,              -- NOT NULL if insulin=TRUE
     other_params        jsonb,
     created_at          TIMESTAMPTZ NOT NULL,
