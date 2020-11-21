@@ -49,7 +49,7 @@ class HeparinRecommendationApi(Resource):
         previous_dosage = HeparinDosageRepository.get_second_newest_by_patient_id(pa.id)
 
         return heparin_recommendation_to_out(recommended_heparin(
-            weight=float(pa.height),
+            weight=float(pa.weight),
             target_aptt_low=float(pa.target_aptt_low),
             target_aptt_high=float(pa.target_aptt_high),
             current_aptt=None if current_aptt is None else float(current_aptt.aptt_value),
