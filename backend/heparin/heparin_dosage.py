@@ -141,9 +141,9 @@ def _get_doctor_warning(current_aptt: float, previous_aptt: float, heparin_conti
                         weight: float) -> Optional[str]:
     if current_aptt is None or previous_aptt is None or heparin_continuous_dosage is None:
         return None
-    elif current_aptt < LOWEST_APTT and previous_aptt < LOWEST_APTT:
+    elif current_aptt < LOWEST_APTT > previous_aptt:
         return f"aPTT below {LOWEST_APTT} for 2 consecutive measurements."
-    elif current_aptt > HIGHEST_APTT and previous_aptt > HIGHEST_APTT:
+    elif current_aptt > HIGHEST_APTT < previous_aptt:
         return f"aPTT above {HIGHEST_APTT} for 2 consecutive measurements."
     elif abs(heparin_continuous_dosage - _default_heparin_continuous_dosage(weight)) >= EXTREME_DOSAGE_DIFF:
         return f"Current continuous heparin dosage differs from default weight based dosage by " \
@@ -176,5 +176,5 @@ def recommended_heparin(weight: float,
 
 
 if __name__ == '__main__':
-    reco = recommended_heparin(83, 1.5, 2, 2.8, 3.2, 25000, 500, 16, 20)
+    reco = recommended_heparin(99, 1.5, 2, 2.8, 3.2, 25000, 500, 16, 20)
     print(reco.heparin_continuous_dosage, reco.heparin_bolus_dosage, reco.next_remainder, reco.doctor_warning)

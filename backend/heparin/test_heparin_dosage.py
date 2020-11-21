@@ -39,7 +39,8 @@ class TestHeparinDosage(unittest.TestCase):
             (83, 1.5, 2, 1.1, 1.15, 25000, 500, 25, 26),
             (83, 1.5, 2, 3.8, 3.6, 25000, 500, 25, 26),
             (83, 1.5, 2, 2.8, 3.6, 25000, 500, 0, 26),
-            (83, 1.5, 2, 2.8, 3.2, 25000, 500, 16, 20)
+            (83, 1.5, 2, 2.8, 3.2, 25000, 500, 16, 20),
+            (99, 1.5, 2, 2.8, 3.2, 25000, 500, 16, 20)
         ]
         expected_outputs = [
             (20, 0, REMAINDER_STANDARD_HOURS, None),
@@ -48,11 +49,13 @@ class TestHeparinDosage(unittest.TestCase):
             (0, 0, REMAINDER_NONCOAGULATING_HOURS, f"aPTT above {HIGHEST_APTT} for 2 consecutive measurements."),
             (21.02, 0, REMAINDER_STANDARD_HOURS, None),
             (12.68, 0, REMAINDER_STANDARD_HOURS,
-             "Current continuous heparin dosage differs from default weight based dosage by 17.32")
+             "Current continuous heparin dosage differs from default weight based dosage by 17.32"),
+            (12.04, 0, REMAINDER_STANDARD_HOURS,
+             "Current continuous heparin dosage differs from default weight based dosage by 23.46")
 
         ]
 
-        for index in range(0, len(data_inputs) - 1):
+        for index in range(0, len(data_inputs)):
             data_input = data_inputs[index]
             expected_output = expected_outputs[index]
             reco = recommended_heparin(data_input[0], data_input[1], data_input[2], data_input[3], data_input[4],
