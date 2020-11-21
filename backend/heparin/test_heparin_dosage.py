@@ -1,9 +1,38 @@
 import unittest
 from datetime import datetime, timedelta
 
-from backend.heparin.heparin_dosage import DEFAULT_WEIGHT_TO_DOSAGE, _linear_interpolation, \
+from backend.heparin.heparin_dosage import _linear_interpolation, \
     _default_heparin_continuous_dosage, recommended_heparin, REMAINDER_STANDARD_HOURS, REMAINDER_FIRST_HOURS, \
     LOWEST_APTT, REMAINDER_NONCOAGULATING_HOURS, HIGHEST_APTT
+
+DEFAULT_WEIGHT_TO_DOSAGE = [
+    (50, 18),
+    (52, 19),
+    (54, 19),
+    (56, 20),
+    (58, 21),
+    (60, 22),
+    (62, 22),
+    (64, 23),
+    (66, 24),
+    (68, 24),
+    (70, 25),
+    (72, 26),
+    (74, 27),
+    (76, 27),
+    (78, 28),
+    (80, 29),
+    (82, 30),
+    (84, 30),
+    (86, 31),
+    (88, 32),
+    (90, 32),
+    (92, 33),
+    (94, 34),
+    (96, 35),
+    (98, 35),
+    (100, 36)
+]
 
 
 class TestHeparinDosage(unittest.TestCase):
@@ -15,13 +44,15 @@ class TestHeparinDosage(unittest.TestCase):
                              DEFAULT_WEIGHT_TO_DOSAGE[index][1])
 
     def test__default_dosage(self):
+        solution_ml = 500
+        solution_heparin_units = 25000
         expected_weight_to_dosage = [
-            (51, 18.5),
-            (53, 19),
-            (55, 19.5),
-            (63, 22.5),
-            (65, 23.5),
-            (67, 24),
+            (51, 18.36),
+            (53, 19.08),
+            (55, 19.8),
+            (63, 22.68),
+            (65, 23.4),
+            (67, 24.12),
             (101, 36),
             (100, 36),
             (1000, 36),
@@ -30,7 +61,9 @@ class TestHeparinDosage(unittest.TestCase):
             (4, 18)
         ]
         for expected_dosage in expected_weight_to_dosage:
-            self.assertEqual(_default_heparin_continuous_dosage(expected_dosage[0]), expected_dosage[1])
+            self.assertEqual(
+                _default_heparin_continuous_dosage(expected_dosage[0], solution_heparin_units, solution_ml),
+                expected_dosage[1])
 
     def test_recommended_heparin(self):
         data_inputs = [
@@ -44,14 +77,14 @@ class TestHeparinDosage(unittest.TestCase):
         ]
         expected_outputs = [
             (20, 0, REMAINDER_STANDARD_HOURS, None),
-            (30.0, 0, REMAINDER_FIRST_HOURS, None),
+            (29.88, 0, REMAINDER_FIRST_HOURS, None),
             (31.64, 132.8, REMAINDER_STANDARD_HOURS, f"aPTT below {LOWEST_APTT} for 2 consecutive measurements."),
             (0, 0, REMAINDER_NONCOAGULATING_HOURS, f"aPTT above {HIGHEST_APTT} for 2 consecutive measurements."),
             (21.02, 0, REMAINDER_STANDARD_HOURS, None),
             (12.68, 0, REMAINDER_STANDARD_HOURS,
-             "Current continuous heparin dosage differs from default weight based dosage by 17.32"),
+             "Current continuous heparin dosage differs from default weight based dosage by 17.2"),
             (12.04, 0, REMAINDER_STANDARD_HOURS,
-             "Current continuous heparin dosage differs from default weight based dosage by 23.46")
+             "Current continuous heparin dosage differs from default weight based dosage by 23.6")
 
         ]
 
