@@ -94,7 +94,7 @@ def _calculate_recommended_dosage(weight: kilogram,
     elif current_aptt < STANDARD_APTT:
         return _get_new_dosage(current_continuous_dosage, weight, ABOVE_STANDARD_APTT_DOSAGE_PER_KG_CHANGE,
                                solution_heparin_units, solution_ml), 0
-    elif current_aptt < HIGH_APTT:
+    elif current_aptt <= HIGH_APTT:
         return _get_new_dosage(current_continuous_dosage, weight, HIGH_APTT_DOSAGE_PER_KG_CHANGE,
                                solution_heparin_units, solution_ml), 0
     else:
