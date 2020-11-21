@@ -149,7 +149,7 @@ class Patient(Resource):
 
         pa.first_name = put_data['first_name']
         pa.last_name = put_data['last_name']
-        pa.date_of_birth = _parse_datetime(put_data['date_of_birth']),
+        pa.date_of_birth = _parse_datetime(put_data['date_of_birth'])
         pa.height = float(put_data['height'])
         pa.weight = float(put_data['weight'])
         pa.sex = put_data['sex']
@@ -198,7 +198,7 @@ class Recommendation(Resource):
         return result
 
 
-def _patient_model_to_dto(pa: Patient) -> dict:
+def _patient_model_to_dto(pa: PatientModel) -> dict:
     if pa is None:
         abort(404, f"Patient does not exist.")
 
