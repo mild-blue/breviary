@@ -30,8 +30,8 @@ class HeparinDosage(Base):
     def __init__(
             self,
             patient: Patient,
-            dosage_heparin_continuous: int,
-            dosage_heparin_bolus: int
+            dosage_heparin_continuous: float,
+            dosage_heparin_bolus: float
     ) -> None:
         self.patient = patient
         self.dosage_heparin_continuous = dosage_heparin_continuous
