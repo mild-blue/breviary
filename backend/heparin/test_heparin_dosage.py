@@ -82,9 +82,9 @@ class TestHeparinDosage(unittest.TestCase):
             (0, 0, REMAINDER_NONCOAGULATING_HOURS, f"aPTT above {HIGHEST_APTT} for 2 consecutive measurements."),
             (21.02, 0, REMAINDER_STANDARD_HOURS, None),
             (12.68, 0, REMAINDER_STANDARD_HOURS,
-             "Current continuous heparin dosage differs from default weight based dosage by 17.2"),
+             "Current continuous heparin dosage differs from default weight based dosage by 17.2."),
             (12.04, 0, REMAINDER_STANDARD_HOURS,
-             "Current continuous heparin dosage differs from default weight based dosage by 23.6")
+             "Current continuous heparin dosage differs from default weight based dosage by 23.6.")
 
         ]
 

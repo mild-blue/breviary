@@ -57,7 +57,7 @@ class HeparinRecommendationApi(Resource):
 
         is_heparin = pa.heparin
 
-        recommendation_heparin = recommended_heparin(
+        heparin_recommendation = recommended_heparin(
             weight=float(pa.weight),
             target_aptt_low=float(pa.target_aptt_low),
             target_aptt_high=float(pa.target_aptt_high) if is_heparin else None,
@@ -72,12 +72,18 @@ class HeparinRecommendationApi(Resource):
         )
 
         logger.info(
-            f"Recommendation. Pump speed: {recommendation_heparin.heparin_continuous_dosage}, bolus: {recommendation_heparin.heparin_bolus_dosage}, next remainder {recommendation_heparin.next_remainder}, warning: {recommendation_heparin.doctor_warning}")
+            f"Recommendation. Pump speed: {heparin_recommendation.heparin_continuous_dosage}, bolus: {heparin_recommendation.heparin_bolus_dosage}, next remainder {heparin_recommendation.next_remainder}, warning: {heparin_recommendation.doctor_warning}.")
 
         HeparinDosageRepository.create(HeparinDosage(
             patient=pa,
-            dosage_heparin_continuous=recommendation_heparin.heparin_continuous_dosage,
-            dosage_heparin_bolus=recommendation_heparin.heparin_bolus_dosage
+            dosage_heparin_continuous=heparin_recommendation.heparin_continuous_dosage,
+            dosage_heparin_bolus=heparin_recommendation.heparin_bolus_dosage
         ))
 
-        return heparin_recommendation_to_out(recommendation_heparin)
+        return heparin_recommendation_to_out(
+            heparin_recommendation=heparin_recommendation,
+            previous_heparin_continuous_dosage=None if current_dosage is None else float(
+                current_dosage.dosage_heparin_continuous),
+            previous_heparin_bolus_dosage=None if current_dosage is None else float(
+                current_dosage.dosage_heparin_bolus)
+        )

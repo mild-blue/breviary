@@ -37,7 +37,9 @@ patient_out = namespace.model('PatientOut', {
     'target_aptt': fields.Nested(target_aptt),
     'actual_aptt': fields.Float(required=True),
     'actual_aptt_updated_on': fields.DateTime(required=True),
+    'previous_aptt': fields.Float(required=True),
     'actual_dosage': fields.Float(required=True),
+    'previous_dosage': fields.Float(required=True),
 })
 
 patient_in = namespace.model('PatientIn', {
@@ -66,7 +68,7 @@ class PatientsLists(Resource):
                         model=failed_response,
                         description='Unexpected error, see contents for details.')
     def get(self):
-        patients = PatientRepository.get_all()
+        patients = PatientRepository.get_all_active()
         result = []
         for pa in patients:
             result.append(_patient_model_to_dto(pa))
@@ -178,8 +180,11 @@ def _patient_model_to_dto(pa: Patient) -> dict:
     if pa is None:
         abort(404, f"Patient does not exist.")
 
-    actual_appt = ApttValueRepository.get_newest_by_patient_id(pa.id)
-    heparin_dosage = HeparinDosageRepository.get_newest_by_patient_id(pa.id)
+    actual_aptt = ApttValueRepository.get_newest_by_patient_id(pa.id)
+    previous_aptt = ApttValueRepository.get_second_newest_by_patient_id(pa.id)
+
+    actual_heparin_dosage = HeparinDosageRepository.get_newest_by_patient_id(pa.id)
+    previous_heparin_dosage = HeparinDosageRepository.get_second_newest_by_patient_id(pa.id)
     is_heparin = pa.heparin
 
     return {
@@ -195,8 +200,10 @@ def _patient_model_to_dto(pa: Patient) -> dict:
             'low': float(pa.target_aptt_low) if is_heparin else None,
             'high': float(pa.target_aptt_high) if is_heparin else None
         },
-        'actual_aptt': None if actual_appt is None else float(actual_appt.aptt_value),
+        'actual_aptt': None if actual_aptt is None else float(actual_aptt.aptt_value),
         'actual_aptt_updated_on': datetime.date(1970, 1,
-                                                1).isoformat() if actual_appt is None else actual_appt.created_at.isoformat(),
-        'actual_dosage': None if heparin_dosage is None else float(heparin_dosage.dosage_heparin_continuous)
+                                                1).isoformat() if actual_aptt is None else actual_aptt.created_at.isoformat(),
+        'previous_aptt': None if previous_aptt is None else float(previous_aptt.aptt_value),
+        'actual_dosage': None if actual_heparin_dosage is None else float(actual_heparin_dosage.dosage_heparin_continuous),
+        'previous_dosage': None if previous_heparin_dosage is None else float(previous_heparin_dosage.dosage_heparin_continuous)
     }

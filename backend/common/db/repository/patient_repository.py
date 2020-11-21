@@ -19,6 +19,14 @@ class PatientRepository(BaseRepository):
         return sup.base_get_all(Patient)  # type: ignore
 
     @staticmethod
+    def get_all_active() -> List[Patient]:
+        session = BaseRepository.get_session()
+        # pylint: disable=E1101,C0301
+        item = session.query(Patient).filter(Patient.active == True) \
+            .order_by(desc(Patient.id)).all()  # type: ignore  # noqa: E501
+        return cast(List[Patient], item)
+
+    @staticmethod
     def create(patient: Patient, commit: bool = True) -> Patient:
         sup = super(PatientRepository, PatientRepository)
         return sup.base_create(patient, commit)  # type: ignore
