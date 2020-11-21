@@ -124,9 +124,9 @@ def _get_doctor_warning(current_aptt: float,
         return f"aPTT below {LOWEST_APTT} for 2 consecutive measurements."
     elif current_aptt > HIGHEST_APTT < previous_aptt:
         return f"aPTT above {HIGHEST_APTT} for 2 consecutive measurements."
-    elif dosage_diff >= EXTREME_DOSAGE_DIFF:
+    elif dosage_diff >= EXTREME_DOSAGE_DIFF and heparin_continuous_dosage > 0:
         return f"Current continuous heparin dosage differs from default weight based dosage by " \
-               f"{round(dosage_diff,1)}."
+               f"{round(dosage_diff, 1)}."
     else:
         return None
 
