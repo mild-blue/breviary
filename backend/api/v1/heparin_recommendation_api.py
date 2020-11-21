@@ -55,14 +55,16 @@ class HeparinRecommendationApi(Resource):
         current_dosage = HeparinDosageRepository.get_newest_by_patient_id(pa.id)
         previous_dosage = HeparinDosageRepository.get_second_newest_by_patient_id(pa.id)
 
+        is_heparin = pa.heparin
+
         return heparin_recommendation_to_out(recommended_heparin(
             weight=float(pa.weight),
             target_aptt_low=float(pa.target_aptt_low),
-            target_aptt_high=float(pa.target_aptt_high),
+            target_aptt_high=float(pa.target_aptt_high) if is_heparin else None,
             current_aptt=current_aptt,
             previous_aptt=None if previous_aptt is None else float(previous_aptt.aptt_value),
             solution_heparin_units=float(pa.solution_heparin_iu),
-            solution_ml=float(pa.solution_ml),
+            solution_ml=float(pa.solution_ml) if is_heparin else None,
             current_continuous_dosage=None if current_dosage is None else float(
                 current_dosage.dosage_heparin_continuous),
             previous_continuous_dosage=None if previous_dosage is None else float(
