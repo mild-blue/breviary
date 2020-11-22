@@ -1,5 +1,6 @@
-from typing import List, Optional
+from typing import List, Optional, cast
 
+from sqlalchemy import desc
 from sqlalchemy.orm import Session  # pylint: disable=import-error
 
 from backend.common.db.database import get_db_session
@@ -39,3 +40,11 @@ class CarbohydrateIntakeValueRepository(BaseRepository):
     def get_by_id(idd: int) -> Optional[CarbohydrateIntakeValue]:
         sup = super(CarbohydrateIntakeValueRepository, CarbohydrateIntakeValueRepository)
         return sup.base_get_by_id(CarbohydrateIntakeValue, idd)  # type: ignore
+
+    @staticmethod
+    def get_by_patient_id(patient_id: int) -> List[CarbohydrateIntakeValue]:
+        session = BaseRepository.get_session()
+        # pylint: disable=E1101,C0301
+        item = session.query(CarbohydrateIntakeValue).filter(CarbohydrateIntakeValue.patient_id == patient_id) \
+            .order_by(desc(CarbohydrateIntakeValue.id)).all()  # type: ignore  # noqa: E501
+        return cast(List[CarbohydrateIntakeValue], item)

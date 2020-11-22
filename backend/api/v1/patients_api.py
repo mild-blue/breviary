@@ -10,7 +10,10 @@ from backend.api.v1.shared_models import failed_response
 from backend.common.db.model.enums import Sex, DrugType
 from backend.common.db.model.patient import Patient as PatientModel
 from backend.common.db.repository.aptt_value_repository import ApttValueRepository
+from backend.common.db.repository.carbohydrate_intake_value_repository import CarbohydrateIntakeValueRepository
+from backend.common.db.repository.glycemia_value_repository import GlycemiaValueRepository
 from backend.common.db.repository.heparin_dosage_repository import HeparinDosageRepository
+from backend.common.db.repository.insulin_dosage_repository import InsulinDosageRepository
 from backend.common.db.repository.patient_repository import PatientRepository
 
 logger = logging.getLogger(__name__)
@@ -37,6 +40,8 @@ patient_out = namespace.model('PatientOut', {
     'previous_aptt': fields.Float(required=True),
     'actual_dosage': fields.Float(required=True),
     'previous_dosage': fields.Float(required=True),
+    'tddi': fields.Float(required=True),  # INSULIN
+    'target_glycemia': fields.Float(required=True)  # INSULIN
 })
 
 patient_in_post_put = namespace.model('PatientInPostPut', {
@@ -159,9 +164,12 @@ class Patient(Resource):
 
 history_entry_out = namespace.model('HistoryEntry', {
     'date': fields.DateTime(required=True),
-    'aptt': fields.Float(required=True),
-    'bolus': fields.Float(required=True),
-    'heparin_continuous': fields.Float(required=True)
+    'aptt': fields.Float(required=True),  # HEPARIN
+    'bolus': fields.Float(required=True),  # HEPARIN
+    'heparin_continuous': fields.Float(required=True),  # HEPARIN
+    'dosage': fields.Float(required=True),  # INSULIN
+    'carbohydrate_intake': fields.Float(required=True),  # INSULIN
+    'glycemia_value': fields.Float(required=True)  # INSULIN
 })
 
 
@@ -179,21 +187,46 @@ class Recommendation(Resource):
                         description='Unexpected error, see contents for details.')
     def get(self, patient_id: str):
         patient_id = int(patient_id)
-        dosages = HeparinDosageRepository.get_by_patient_id(patient_id)
-        aptts = ApttValueRepository.get_by_patient_id(patient_id)
+        pa = PatientRepository.get_first_inactive_patient()
 
-        min_len = min(len(dosages), len(aptts))
+        if pa is None:
+            abort(404, f"Patient does not exist.")
         result = []
 
-        for i in range(0, min_len):
-            dosage = dosages[i]
-            aptt = aptts[i]
-            result.append({
-                'date': dosage.created_at.isoformat(),
-                'aptt': float(aptt.aptt_value),
-                'bolus': float(dosage.dosage_heparin_bolus),
-                'heparin_continuous': float(dosage.dosage_heparin_continuous)
-            })
+        if pa.heparin:
+            heparin_dosages = HeparinDosageRepository.get_by_patient_id(patient_id)
+            aptts = ApttValueRepository.get_by_patient_id(patient_id)
+
+            min_len = min(len(heparin_dosages), len(aptts))
+
+            for i in range(0, min_len):
+                dosage = heparin_dosages[i]
+                aptt = aptts[i]
+                result.append({
+                    'date': dosage.created_at.isoformat(),
+                    'aptt': float(aptt.aptt_value),
+                    'bolus': float(dosage.dosage_heparin_bolus),
+                    'heparin_continuous': float(dosage.dosage_heparin_continuous),
+
+                })
+        else:
+            insulin_dosages = InsulinDosageRepository.get_by_patient_id(patient_id)
+            carb_intakes = CarbohydrateIntakeValueRepository.get_by_patient_id(patient_id)
+            glycemia_values = GlycemiaValueRepository.get_by_patient_id(patient_id)
+
+            min_len = min(len(insulin_dosages), len(carb_intakes), len(glycemia_values))
+
+            for i in range(0, min_len):
+                dosage = insulin_dosages[i]
+                carb_intake = carb_intakes[i]
+                glycemia_value = glycemia_values[i]
+                result.append({
+                    'date': dosage.created_at.isoformat(),
+                    'dosage': float(dosage.dosage_insulin),
+                    'carbohydrate_intake': float(carb_intake.carbohydrate_intake_value),
+                    'glycemia_value': float(glycemia_value.glycemia_value),
+
+                })
 
         return result
 
@@ -229,7 +262,9 @@ def _patient_model_to_dto(pa: Patient) -> dict:
         'actual_dosage': None if actual_heparin_dosage is None else float(
             actual_heparin_dosage.dosage_heparin_continuous),
         'previous_dosage': None if previous_heparin_dosage is None else float(
-            previous_heparin_dosage.dosage_heparin_continuous)
+            previous_heparin_dosage.dosage_heparin_continuous),
+        'tddi': None if pa.tddi is None else float(pa.tddi),
+        'target_glycemia': None if pa.target_glycemia is None else float(pa.target_glycemia)
     }
 
 
