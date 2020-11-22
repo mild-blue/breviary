@@ -231,7 +231,7 @@ class Recommendation(Resource):
         return result
 
 
-def _patient_model_to_dto(pa: Patient) -> dict:
+def _patient_model_to_dto(pa: PatientModel) -> dict:
     if pa is None:
         abort(404, f"Patient does not exist.")
 
