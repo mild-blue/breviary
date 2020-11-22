@@ -188,7 +188,7 @@ class Recommendation(Resource):
                         description='Unexpected error, see contents for details.')
     def get(self, patient_id: str):
         patient_id = int(patient_id)
-        pa = PatientRepository.get_first_inactive_patient()
+        pa = PatientRepository.get_by_id(patient_id)
 
         if pa is None:
             abort(404, f"Patient does not exist.")
