@@ -164,6 +164,7 @@ class Patient(Resource):
 
 history_entry_out = namespace.model('HistoryEntry', {
     'date': fields.DateTime(required=True),
+    'drug_type': fields.String(required=True, enum=[drug.value for drug in DrugType]),
     'aptt': fields.Float(required=True),  # HEPARIN
     'bolus': fields.Float(required=True),  # HEPARIN
     'heparin_continuous': fields.Float(required=True),  # HEPARIN
@@ -204,6 +205,7 @@ class Recommendation(Resource):
                 aptt = aptts[i]
                 result.append({
                     'date': dosage.created_at.isoformat(),
+                    'drug_type': DrugType.HEPARIN,
                     'aptt': float(aptt.aptt_value),
                     'bolus': float(dosage.dosage_heparin_bolus),
                     'heparin_continuous': float(dosage.dosage_heparin_continuous),
@@ -222,6 +224,7 @@ class Recommendation(Resource):
                 glycemia_value = glycemia_values[i]
                 result.append({
                     'date': dosage.created_at.isoformat(),
+                    'drug_type': DrugType.INSULIN,
                     'dosage': float(dosage.dosage_insulin),
                     'carbohydrate_intake': float(carb_intake.carbohydrate_intake_value),
                     'glycemia_value': float(glycemia_value.glycemia_value),
